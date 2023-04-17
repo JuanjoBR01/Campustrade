@@ -35,6 +35,8 @@
     <string name="error_dialog_title">Oops!</string>
     <string name="error_dialog_message">The password fields do not match</string>
     <string name="try_again">Try Again</string>
+    <string name="title_activity_home_mvvm">HomeActivityMVVM</string>
+    <string name="title_activity_history">HistoryActivity</string>
 
 
 </resources>
