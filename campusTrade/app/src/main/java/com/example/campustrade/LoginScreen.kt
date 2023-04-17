@@ -24,18 +24,15 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.campustrade.ui.theme.CampustradeTheme
+import androidx.compose.material.lightColors
 import com.example.campustrade.ui.theme.darkBlue
 import com.example.campustrade.ui.theme.orange
 import com.example.campustrade.ui.theme.yellow
 import com.google.firebase.auth.FirebaseAuth
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 
 
 class LoginScreen : ComponentActivity() {
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,12 +47,7 @@ class LoginScreen : ComponentActivity() {
 
 
 @Composable
-fun LoginScreenComposable(
-    modifier: Modifier = Modifier,
-    loginViewModel: LoginViewModel = viewModel()) {
-
-    val loginUiState by loginViewModel.uiState.collectAsState()
-
+fun LoginScreenComposable(modifier: Modifier = Modifier) {
 
     var emailField by remember {
         mutableStateOf("")
@@ -66,8 +58,6 @@ fun LoginScreenComposable(
     }
 
     val context = LocalContext.current
-
-    val maxLen = 31
 
     Column (
         verticalArrangement = Arrangement.Center,
@@ -89,8 +79,10 @@ fun LoginScreenComposable(
         Spacer(modifier = Modifier.height(24.dp))
 
         OutlinedTextField(
-            value = loginViewModel.userMail,
-            onValueChange = { loginViewModel.updateUserMail(it) },
+            value = emailField,
+            onValueChange = {newText ->
+                emailField = newText
+            },
             label = { Text(stringResource(id = R.string.user_login_view),
                 color = darkBlue,
                 style = MaterialTheme.typography.body1) },
@@ -109,8 +101,10 @@ fun LoginScreenComposable(
         Spacer(modifier = Modifier.height(10.dp))
 
         OutlinedTextField(
-            value = loginViewModel.userPassword,
-            onValueChange = {loginViewModel.updateUserPassword(it)},
+            value = passwordField,
+            onValueChange = {newValue ->
+                passwordField = newValue
+            },
             label = { Text(stringResource(id = R.string.password_login_view),
                 color = darkBlue) },
             leadingIcon = {
@@ -130,14 +124,35 @@ fun LoginScreenComposable(
 
         Button(
             onClick = {
-                var msg = loginViewModel.sendData()
-                Toast
-                    .makeText(
+                if (emailField != "" && passwordField != "") {
+                    FirebaseAuth
+                        .getInstance()
+                        .signInWithEmailAndPassword(emailField, passwordField)
+                        .addOnCompleteListener() {
+                            if (it.isSuccessful) {
+                                Toast.makeText(
+                                    context,
+                                    "Login successful",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                val intent = Intent(context, HomeActivity::class.java)
+                                context.startActivity(intent)
+                            } else {
+                                Toast.makeText(
+                                    context,
+                                    "It was a problem logging you in",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+                } else{
+                    Toast.makeText(
                         context,
-                        msg,
-                        Toast.LENGTH_SHORT)
-                    .show()
-                      },
+                        "The credentials are invalid",
+                        Toast.LENGTH_SHORT
+                    ).show()
+
+                }},
             colors = ButtonDefaults.buttonColors(
                 backgroundColor = orange),
             modifier = Modifier.width(200.dp),

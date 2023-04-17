@@ -1,25 +1,19 @@
 package com.example.campustrade
 
-import android.R
-import android.R.id
 import android.content.Intent
-import android.media.Image
-import android.media.browse.MediaBrowser.MediaItem
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -27,18 +21,26 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.annotation.ExperimentalCoilApi
-import coil.compose.AsyncImage
 import com.example.campustrade.ui.theme.CampustradeTheme
+import com.example.campustrade.ui.theme.black
+import com.google.firebase.firestore.CollectionReference
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.QuerySnapshot
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.firestore.ktx.toObjects
+import com.google.firebase.ktx.Firebase
 
 
 class HomeActivity : ComponentActivity() {
@@ -54,6 +56,7 @@ class HomeActivity : ComponentActivity() {
                     Column(modifier = Modifier
                         .fillMaxSize()
                     ){
+                        readData()
                         MyBodyHome()
                         MyBottomBar()
                     }
@@ -64,9 +67,36 @@ class HomeActivity : ComponentActivity() {
 }
 
 @Composable
+fun readData(){
+    // on below line creating an instance of firebase firestore.
+    val db: FirebaseFirestore = FirebaseFirestore.getInstance()
+
+    // Read the data from Firestore
+    var data by remember { mutableStateOf(emptyList<ProductDB>()) }
+
+    db.collection("ProductsDB")
+        .get()
+        .addOnSuccessListener { querySnapshot: QuerySnapshot ->
+            // Convert the QuerySnapshot to a list of data objects using toObjects
+            data = querySnapshot.toObjects<ProductDB>()
+        }
+
+    data.forEach{item ->
+        Text(text = item.name)
+    }
+}
+
+data class ProductDB(val name: String, val type: String, val price: Int, val condition: String, val description: String, val image: String, val publishDate: String, val stock: Int, val tags: String, val technicalSpecs: String){
+    constructor(): this("Prueba", "Prueba", 8, "Prueba","Prueba","Prueba","Prueba",8,"Prueba","Prueba",)
+}
+
+
+@Composable
 fun MyBodyHome(){
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
+
+    val maxChar = 25
 
     var value by remember {
         mutableStateOf("")
@@ -75,13 +105,27 @@ fun MyBodyHome(){
     if (isPressed)
         MyBodyHome()
 
-    TopAppBar(
-        title = { TextField(value = value,
-            singleLine = true,
-            placeholder={ Text(text="Search",fontSize = 28.sp) },
-            onValueChange = { newText ->
-                value = newText
-            })
+    TopAppBar(modifier = Modifier.height(75.dp),
+        title = {
+            Column() {
+                TextField(modifier = Modifier.height(60.dp),
+                    value = value,
+                    singleLine = true,
+                    placeholder = { Text(text = "Search", fontSize = 22.sp) },
+                    onValueChange = {
+                        if (it.length <= maxChar) value = it
+                    },
+                )
+                Text(
+                    text = "${value.length} / $maxChar",
+                    textAlign = TextAlign.End,
+                    style = MaterialTheme.typography.caption,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(end = 16.dp),
+                    color = black
+                )
+            }
         },
         backgroundColor = Color(0xFF8ECAE6),
         navigationIcon = {
@@ -106,10 +150,11 @@ fun MyBodyHome(){
 
 @Composable
 fun ProductList(producto: Product) {
-    //producto = Product(name = "Pencils", type = "Material", price = 5000, icon = Icons.Filled.Home)
+
     Column (modifier = Modifier
         .padding(16.dp)
-        .border(2.dp, Color.Black)
+        .border(2.dp, Color.Black, shape = RoundedCornerShape(10.dp))
+        .shadow(20.dp)
         .background(Color(0xFFEBEBEB))
     )
     {
@@ -119,11 +164,13 @@ fun ProductList(producto: Product) {
                 .fillMaxWidth(),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = producto.icon,
-                contentDescription = producto.name,
-                modifier = Modifier.size(128.dp)
-            )
+            Image(
+                modifier = Modifier
+                    .size(175.dp)
+                    .clip(RoundedCornerShape(25.dp)),
+                painter = painterResource(returnImage(producto.name)),
+                contentDescription = "Imagen",
+                )
         }
         Box(
             contentAlignment = Alignment.Center,
@@ -171,18 +218,26 @@ fun ProductList(producto: Product) {
     }
 }
 
-
+private fun returnImage(nombre: String): Int {
+    if(nombre == "Lab Coat") return R.drawable.lab_coat
+    else if(nombre == "Sneakers") return R.drawable.sneakers
+    else if(nombre == "Lab Mask") return R.drawable.lab_mask
+    else if(nombre == "Arduino") return R.drawable.arduino
+    else if(nombre == "Pencils") return R.drawable.pencils
+    else if(nombre == "Screwdriver Set") return R.drawable.screwdriver_set
+    return R.drawable.sneakers
+}
 
 private fun prepareProductList(): List<Product> {
     val productList = arrayListOf<Product>()
 
     // add menu items
-    productList.add(Product(name = "Lab Coat", type = "Accesory", price = 30000, icon = Icons.Filled.Star ))
-    productList.add(Product(name = "Arduino", type = "Product", price = 400000, icon = Icons.Filled.Phone))
-    productList.add(Product(name = "Pencils", type = "Material", price = 5000, icon = Icons.Filled.Create))
-    productList.add(Product(name = "Sneakers", type = "Accesory", price = 100000, icon = Icons.Filled.Star))
-    productList.add(Product(name = "Lab Mask", type = "Accesory", price = 500000, icon = Icons.Filled.Star))
-    productList.add(Product(name = "Screwdriver Set", type = "Product", price = 20000, icon = Icons.Filled.Phone))
+    productList.add(Product(name = "Lab Coat", type = "Accesory", price = 30000, icon = Icons.Filled.Star, date = "24/03/2022" ))
+    productList.add(Product(name = "Arduino", type = "Product", price = 400000, icon = Icons.Filled.Phone, date = "2/04/2022"))
+    productList.add(Product(name = "Pencils", type = "Material", price = 5000, icon = Icons.Filled.Create, date = "6/05/2022"))
+    productList.add(Product(name = "Sneakers", type = "Accesory", price = 100000, icon = Icons.Filled.Star, date = "12/06/2022"))
+    productList.add(Product(name = "Lab Mask", type = "Accesory", price = 500000, icon = Icons.Filled.Star, date = "18/07/2022"))
+    productList.add(Product(name = "Screwdriver Set", type = "Product", price = 20000, icon = Icons.Filled.Phone, date = "21/08/2022"))
 
     return productList
 }
@@ -223,7 +278,7 @@ private fun arrangeProductList(search: String): List<Product>{
     return finalList
 }
 
-data class Product(val name: String, val type: String, val price: Int,  val icon: ImageVector)
+data class Product(val name: String, val type: String, val price: Int, val icon: ImageVector, val date: String)
 
 
 @Composable
@@ -269,7 +324,7 @@ fun MyBottomBar() {
                             val intent = Intent(context, PublishActivity::class.java)
                             context.startActivity(intent)
                         }
-                        else if(name == "Transact")
+                        else if(name == "History")
                         {
                             val intent = Intent(context, TransactionsActivity::class.java)
                             context.startActivity(intent)
@@ -308,7 +363,7 @@ private fun prepareBottomMenu(): List<BottomMenuItem> {
     bottomMenuItemsList.add(BottomMenuItem(label = "Home", icon = Icons.Filled.Home))
     bottomMenuItemsList.add(BottomMenuItem(label = "Explore", icon = Icons.Filled.List))
     bottomMenuItemsList.add(BottomMenuItem(label = "Publish", icon = Icons.Filled.Add))
-    bottomMenuItemsList.add(BottomMenuItem(label = "Transact", icon = Icons.Filled.ShoppingCart))
+    bottomMenuItemsList.add(BottomMenuItem(label = "History", icon = Icons.Filled.ShoppingCart))
     bottomMenuItemsList.add(BottomMenuItem(label = "Profile", icon = Icons.Filled.Person))
 
     return bottomMenuItemsList
@@ -323,6 +378,7 @@ fun DefaultPreviewHome() {
         Column(modifier = Modifier
             .fillMaxSize()
         ){
+            readData()
             MyBodyHome()
             MyBottomBar()
         }

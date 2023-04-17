@@ -93,8 +93,6 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier) {
 
     val context = LocalContext.current
 
-    val maxLen = 51
-
 
     Column (
         modifier = Modifier.fillMaxWidth(),
@@ -144,11 +142,7 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier) {
 
         TextBoxField(
             nameField,
-            {newValue ->
-                if (newValue.length < maxLen){
-                    nameField = newValue
-                }
-            },
+            {newValue -> nameField = newValue},
             stringResource(id = R.string.name_sign_up_form),
             VisualTransformation.None)
 
@@ -156,11 +150,7 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier) {
 
         TextBoxField(
             emailField,
-            {newValue ->
-                if (newValue.length < maxLen){
-                    emailField = newValue
-                }
-            },
+            {newValue -> emailField = newValue},
             label = stringResource(id = R.string.email_sign_up_form),
             VisualTransformation.None
         )
@@ -171,7 +161,7 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier) {
             .padding(start = 32.dp, end = 32.dp, bottom = 10.dp)){
             OutlinedTextField(
                 value = valueType,
-                onValueChange = { if(it.length < maxLen) valueType = it },
+                onValueChange = { valueType = it },
                 modifier = Modifier
                     .fillMaxWidth()
                     .onGloballyPositioned { coordinates ->
@@ -183,8 +173,7 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier) {
                 trailingIcon = {
                     Icon(painter = painterResource(id = R.drawable.baseline_expand_more_black_48),"contentDescription",
                         Modifier.clickable { expanded = !expanded })
-                },
-                singleLine = true
+                }
             )
 
 
@@ -216,14 +205,14 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier) {
 
         TextBoxField(
             secretField,
-            {newValue -> if(newValue.length < maxLen) secretField = newValue},
+            {newValue -> secretField = newValue},
             label = stringResource(id = R.string.password_sign_up_form),
             PasswordVisualTransformation())
 
         Spacer(modifier = Modifier.height(10.dp))
 
         TextBoxField(confirmSecretField,
-            {newValue -> if(newValue.length < maxLen) confirmSecretField = newValue},
+            {newValue -> confirmSecretField = newValue},
             label = stringResource(id = R.string.confirm_password_sign_up_form),
             PasswordVisualTransformation())
 

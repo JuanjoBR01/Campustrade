@@ -1,0 +1,229 @@
+package com.example.campustrade
+
+import android.content.Intent
+import android.widget.Toast
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.campustrade.ui.theme.black
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.QuerySnapshot
+import com.google.firebase.firestore.ktx.toObjects
+
+
+@Composable
+fun readData2(homeViewModel: HomeViewModel){
+
+    val data :List<ProductDB> by homeViewModel.productList.observeAsState(emptyList())
+
+    data.forEach{item ->
+        Text(text = item.name)
+    }
+}
+
+@Composable
+fun MyBodyHome2(homeViewModel: HomeViewModel){
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+
+    val maxChar = 25
+    val value :String by homeViewModel.value.observeAsState(initial = "")
+
+    if (isPressed)
+        MyBodyHome2(homeViewModel)
+
+    TopAppBar(modifier = Modifier.height(75.dp),
+        title = {
+            Column() {
+                TextField(modifier = Modifier.height(60.dp),
+                    value = value,
+                    singleLine = true,
+                    placeholder = { Text(text = "Search", fontSize = 22.sp) },
+                    onValueChange = {
+                        homeViewModel.onSearchChange(it)
+                    },
+                )
+                Text(
+                    text = "${value.length} / $maxChar",
+                    textAlign = TextAlign.End,
+                    style = MaterialTheme.typography.caption,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(end = 16.dp),
+                    color = black
+                )
+            }
+        },
+        backgroundColor = Color(0xFF8ECAE6),
+        navigationIcon = {
+            IconButton(onClick = {},
+                interactionSource = interactionSource) {
+                Icon(imageVector = Icons.Filled.Search, contentDescription = "Navigation icon", modifier = Modifier.size(90.dp))
+            }
+        }
+    )
+
+    val configuration = LocalConfiguration.current
+    val screenHeight = configuration.screenHeightDp.dp
+
+    val productList = homeViewModel.arrangeProductList(value)
+
+    Box(modifier = Modifier.height(screenHeight-130.dp))
+    {
+        LazyVerticalGrid(columns = GridCells.Adaptive(minSize = 150.dp)) {
+            items(productList) { item ->
+                ProductList2(item, homeViewModel)
+            }
+        }
+    }
+}
+
+@Composable
+fun ProductList2(producto: Product, homeViewModel: HomeViewModel) {
+    //producto = Product(name = "Pencils", type = "Material", price = 5000, icon = Icons.Filled.Home)
+    Column (modifier = Modifier
+        .padding(16.dp)
+        .border(2.dp, Color.Black, shape = RoundedCornerShape(10.dp))
+        .shadow(20.dp)
+        .background(Color(0xFFEBEBEB))
+    )
+    {
+        Box(
+            modifier = Modifier
+                .padding(10.dp)
+                .fillMaxWidth(),
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                modifier = Modifier
+                    .size(175.dp)
+                    .clip(RoundedCornerShape(25.dp)),
+                painter = painterResource(homeViewModel.returnImage(producto.name)),
+                contentDescription = "Imagen",
+            )
+        }
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFFEBEBEB))
+        ) {
+            Text(
+                text = producto.name,
+                style = MaterialTheme.typography.h6,
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFFEBEBEB))
+        ) {
+            Text(
+                text = producto.price.toString() + "$",
+                style = MaterialTheme.typography.h6,
+                fontSize = 17.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+        }
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFFEBEBEB))
+                .padding(bottom = 16.dp)
+        ) {
+            Text(
+                text = producto.type,
+                style = MaterialTheme.typography.h6,
+                fontSize = 17.sp,
+                color = Color(0xFF939393)
+            )
+
+        }
+
+    }
+}
+
+
+
+@Composable
+fun MyBottomBar2(homeViewModel: HomeViewModel) {
+    // items list
+    val bottomMenuItemsList = homeViewModel.prepareBottomMenu()
+
+    val contextForToast = LocalContext.current.applicationContext
+
+    var selectedItem by remember {
+        mutableStateOf("Publish")
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        BottomNavigation(
+            modifier = Modifier.align(alignment = Alignment.BottomCenter),
+            backgroundColor = Color(0xFF023047),
+            contentColor = Color.White
+        ) {
+            // this is a row scope
+            // all items are added horizontally
+
+            bottomMenuItemsList.forEach { menuItem ->
+                // adding each item
+                val textColor = if (menuItem.label == "Publish") "anaranjado" else "azul"
+                val context = LocalContext.current
+                BottomNavigationItem(
+                    selected = (selectedItem == menuItem.label),
+                    onClick = {
+                        selectedItem = menuItem.label
+                        Toast.makeText(
+                            contextForToast,
+                            menuItem.label, Toast.LENGTH_SHORT
+                        ).show()
+                        val name = menuItem.label
+                        homeViewModel.changePage(name, context)
+
+                    },
+                    icon = {
+                        Icon(
+                            imageVector = menuItem.icon,
+                            contentDescription = menuItem.label
+                        )
+                    },
+                    label = {
+                        Text(text = menuItem.label)
+                    },
+                    enabled = true,
+                    modifier = Modifier.background(homeViewModel.returnColor(textColor))
+                )
+            }
+        }
+    }
+}
