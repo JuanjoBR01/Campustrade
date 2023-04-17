@@ -15,6 +15,7 @@ import com.google.firebase.firestore.ktx.toObjects
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.QuerySnapshot
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 class HomeViewModel(private val repository: HomeRepository): ViewModel() {
 
@@ -23,7 +24,7 @@ class HomeViewModel(private val repository: HomeRepository): ViewModel() {
 
     init{
         viewModelScope.launch {
-            _productList.value = repository.getData()
+            //_productList.value = repository.getData()
         }
     }
 
@@ -87,6 +88,47 @@ class HomeViewModel(private val repository: HomeRepository): ViewModel() {
         }
 
         return finalList
+    }
+
+    fun arrangeProductListFirestore(search: String){
+        val productList = arrayListOf<ProductDB>()
+        var finalList = arrayListOf<ProductDB>()
+
+        runBlocking{
+            launch{
+                val actualList = repository.getData()
+
+                val preference = "Accesory"
+
+                actualList.forEach { producto ->
+                    if(producto.type == preference && producto.name.length > 2)
+                    {
+                        productList.add(producto)
+                    }
+                }
+                actualList.forEach { producto ->
+                    if(producto.type != preference && producto.name.length > 2)
+                    {
+                        productList.add(producto)
+                    }
+                }
+
+                if(search != "")
+                {
+                    productList.forEach { producto ->
+                        if(producto.name.contains(search))
+                        {
+                            finalList.add(producto)
+                        }
+                    }
+                }
+                else{
+                    finalList = productList
+                }
+
+                _productList.value =  finalList
+            }
+        }
     }
 
     data class Product2(val name: String, val type: String, val price: Int, val icon: ImageVector)

@@ -41,9 +41,6 @@ fun readData2(homeViewModel: HomeViewModel){
 
     val data :List<ProductDB> by homeViewModel.productList.observeAsState(emptyList())
 
-    data.forEach{item ->
-        Text(text = item.name)
-    }
 }
 
 @Composable
@@ -91,20 +88,37 @@ fun MyBodyHome2(homeViewModel: HomeViewModel){
     val configuration = LocalConfiguration.current
     val screenHeight = configuration.screenHeightDp.dp
 
-    val productList = homeViewModel.arrangeProductList(value)
+    //val productList = homeViewModel.arrangeProductList(value)
 
-    Box(modifier = Modifier.height(screenHeight-130.dp))
-    {
-        LazyVerticalGrid(columns = GridCells.Adaptive(minSize = 150.dp)) {
-            items(productList) { item ->
-                ProductList2(item, homeViewModel)
+    val data :List<ProductDB> by homeViewModel.productList.observeAsState(emptyList())
+
+    homeViewModel.arrangeProductListFirestore(value)
+
+    if(data.size == 0){
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = androidx.compose.ui.Alignment.Center
+        ) {
+            CircularProgressIndicator(
+                color = Color.Blue,
+                strokeWidth = 4.dp,
+            )
+        }
+    }
+    else{
+        Box(modifier = Modifier.height(screenHeight-130.dp))
+        {
+            LazyVerticalGrid(columns = GridCells.Adaptive(minSize = 150.dp)) {
+                items(data) { item ->
+                    ProductList2(item, homeViewModel)
+                }
             }
         }
     }
 }
 
 @Composable
-fun ProductList2(producto: Product, homeViewModel: HomeViewModel) {
+fun ProductList2(producto: ProductDB, homeViewModel: HomeViewModel) {
     //producto = Product(name = "Pencils", type = "Material", price = 5000, icon = Icons.Filled.Home)
     Column (modifier = Modifier
         .padding(16.dp)
