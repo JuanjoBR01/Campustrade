@@ -1,0 +1,40 @@
+<resources>
+    <string name="app_name">campustrade</string>
+    <string name="title_activity_publish">PublishActivity</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="first_fragment_label">First Fragment</string>
+    <string name="second_fragment_label">Second Fragment</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
+
+    <string name="hello_first_fragment">Hello first fragment</string>
+    <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
+    <string name="title_activity_launch_camera">LaunchCameraActivity</string>
+
+    <string name="app_title">CampusTrade</string>
+    <string name="title_activity_home">HomeActivity</string>
+    <string name="title_activity_transactions">TransactionsActivity</string>
+
+    <string name="user_login_view">Email</string>
+    <string name="password_login_view">Password</string>
+    <string name="cube_logo">Cube Logo</string>
+    <string name="person_icon">Person Icon</string>
+    <string name="lock_icon">Lock Icon</string>
+    <string name="log_in_button">LOG IN</string>
+    <string name="sign_up_button">SIGN UP</string>
+    <string name="sign_up_top_bar_text">Sign Up</string>
+    <string name="back_button">Back</string>
+    <string name="add_a_photo_button">Add a Photo</string>
+    <string name="name_sign_up_form">Name</string>
+    <string name="email_sign_up_form">Email</string>
+    <string name="password_sign_up_form">Password</string>
+    <string name="confirm_password_sign_up_form">Confirm Password</string>
+    <string name="confirm_button_sign_up_form">CONFIRM</string>
+    <string name="title_activity_sign_up">signup</string>
+    <string name="title_activity_log_in">login</string>
+    <string name="error_dialog_title">Oops!</string>
+    <string name="error_dialog_message">The password fields do not match</string>
+    <string name="try_again">Try Again</string>
+
+
+</resources>
