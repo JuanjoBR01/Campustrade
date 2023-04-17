@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.Campustrade" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">@color/grey_50</item>
+        <item name="android:windowLightStatusBar">true</item>>
+    </style>
+
+    <style name="Theme.Campustrade.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="Theme.Campustrade.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+
+    <style name="Theme.Campustrade.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+</resources>

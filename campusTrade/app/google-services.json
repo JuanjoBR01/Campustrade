@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "364454246420",
+    "project_id": "campustrade-6d7b6",
+    "storage_bucket": "campustrade-6d7b6.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:364454246420:android:9ce15f7529acb0a3a30f01",
+        "android_client_info": {
+          "package_name": "com.example.campustrade"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "364454246420-4r0njuaq6oe0kt7j3ru8kp7v27gkjp1j.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD4fTEuLINKdujK_ObZLQ0taRPfAfPsnLY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "364454246420-4r0njuaq6oe0kt7j3ru8kp7v27gkjp1j.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "364454246420-4b7fnfi46pfrsv5lboqkigmq78r5nsp1.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.campustrade"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
