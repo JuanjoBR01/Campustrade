@@ -9,4 +9,8 @@ data class ProductObj(
     var condition:String,
     var type:String,
     var tags:String
-)
+){
+    fun changeImage(pImage:String){
+        image = pImage
+    }
+}

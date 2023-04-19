@@ -56,10 +56,10 @@
             android:label="@string/title_activity_launch_camera"
             android:theme="@style/Theme.Campustrade" />
         <activity
-            android:name=".PublishActivity"
+            android:name=".PublishScreen"
             android:screenOrientation="portrait"
             android:exported="false"
-            android:label="@string/title_activity_publish"
+            android:label="PublishScreen"
             android:theme="@style/Theme.Campustrade" />
         <activity
             android:name=".TransactionsActivity"

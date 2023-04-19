@@ -56,7 +56,7 @@ class HomeActivity : ComponentActivity() {
                     Column(modifier = Modifier
                         .fillMaxSize()
                     ){
-                        readData()
+                        //readData()
                         MyBodyHome()
                         MyBottomBar()
                     }
