@@ -58,6 +58,7 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 import java.util.*
 import java.util.UUID.*
+import androidx.compose.material.AlertDialog
 
 class PublishScreen : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -155,6 +156,8 @@ fun TopView() {
     }
 
     var mTextFieldSize by remember { mutableStateOf(Size.Zero)}
+
+    var isRunning by remember {mutableStateOf(false)}
 
 
     Column(Modifier
@@ -316,16 +319,37 @@ fun TopView() {
         ) {
             Button(
                 onClick = {
-                    val productOb = ProductObj(
-                        "",
-                        prodName,
-                        prodPrice.toInt(),
-                        prodDescr,
-                        selectedItem,
-                        valueType,
-                        prodTags
-                    )
-                    val imgUrl = uploadImageToDataBase(context,contentImage.value,productOb)
+                    try{
+                        val productOb = ProductObj(
+                            "",
+                            prodName,
+                            prodPrice.toInt(),
+                            prodDescr,
+                            selectedItem,
+                            valueType,
+                            prodTags
+                        )
+                        Toast.makeText(context, "Publishing...", Toast.LENGTH_LONG).show()
+                        val imgUrl = uploadImageToDataBase(context,contentImage.value,productOb)
+                        prodName = ""
+                        prodPrice = ""
+                        prodDescr = ""
+                        selectedItem = ""
+                        valueType = ""
+                        prodTags=""
+                        contentImage.value = null
+                    }
+                    catch (e: Exception){
+                        Toast.makeText(context, "Error While Trying upload. Please Try Again", Toast.LENGTH_LONG).show()
+                        prodName = ""
+                        prodPrice = ""
+                        prodDescr = ""
+                        selectedItem = ""
+                        valueType = ""
+                        prodTags=""
+                        contentImage.value = null
+                    }
+
                     },
                 colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFFFB8500))
             ) {
