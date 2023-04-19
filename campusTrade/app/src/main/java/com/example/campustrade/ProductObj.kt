@@ -2,6 +2,7 @@ package com.example.campustrade
 
 
 data class ProductObj(
+    var image:String,
     var name:String,
     var price:Int,
     var description:String,

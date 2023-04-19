@@ -2,6 +2,8 @@ package com.example.campustrade
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
@@ -46,9 +48,14 @@ import androidx.core.content.FileProvider
 import coil.compose.rememberAsyncImagePainter
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.ktx.storage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import java.io.ByteArrayOutputStream
 import java.io.File
+import java.util.*
+import java.util.UUID.*
 
 class PublishScreen : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -307,33 +314,55 @@ fun TopView() {
         ) {
             Button(
                 onClick = {
+                    Toast.makeText(context, "Start adding image", Toast.LENGTH_SHORT).show()
                     // on below line creating an instance of firebase firestore.
                     val db: FirebaseFirestore = FirebaseFirestore.getInstance()
                     //creating a collection reference for our Firebase Firestore database.
                     val dbCourses: CollectionReference = db.collection("ProductsDB")
-                    //adding our data to our courses object class.
-                    val productOb = ProductObj(
-                        prodName,
-                        prodPrice.toInt(),
-                        prodDescr,
-                        selectedItem,
-                        valueType,
-                        prodTags
-                    )
-                    //below method is use to add data to Firebase Firestore.
-                    dbCourses.add(productOb).addOnSuccessListener {
-                        // after the data addition is successful
-                        // we are displaying a success toast message.
-                        Toast.makeText(
-                            context,
-                            "Your Product has been added to Firebase Firestore",
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }.addOnFailureListener { e ->
-                        // this method is called when the data addition process is failed.
-                        // displaying a toast message when data addition is failed.
-                        Toast.makeText(context, "Fail to add course", Toast.LENGTH_SHORT).show()
+                    //Image handling
+                    var contImgUri:Uri = contentImage.value!!
+                    val bitmap = BitmapFactory.decodeStream(context.contentResolver.openInputStream(contImgUri))
+                    val bytes = bitmapToByteArray(bitmap)
+                    val storageRef = Firebase.storage.reference.child("images/${randomUUID()}")
+                    val uploadTask = storageRef.putBytes(bytes)
+                    var imgUrl:String = ""
+                    uploadTask.addOnSuccessListener { taskSnapshot ->
+                        storageRef.downloadUrl.addOnSuccessListener { uri ->
+                            imgUrl = uri.toString()
+                        }
                     }
+                    Toast.makeText(context, "Finish Img adding prod", Toast.LENGTH_SHORT).show()
+                    //adding our data to our courses object class.
+                    if(imgUrl != ""){
+                        val productOb = ProductObj(
+                            imgUrl,
+                            prodName,
+                            prodPrice.toInt(),
+                            prodDescr,
+                            selectedItem,
+                            valueType,
+                            prodTags
+                        )
+                        //below method is use to add data to Firebase Firestore.
+                        dbCourses.add(productOb).addOnSuccessListener {
+                            // after the data addition is successful
+                            // we are displaying a success toast message.
+                            Toast.makeText(
+                                context,
+                                "Your Product has been added to Firebase Firestore",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }.addOnFailureListener { e ->
+                            // this method is called when the data addition process is failed.
+                            // displaying a toast message when data addition is failed.
+                            Toast.makeText(context, "Fail to add product", Toast.LENGTH_LONG).show()
+                        }
+                    }
+                    else{
+                        Toast.makeText(context, "Fail to add Image in product", Toast.LENGTH_LONG).show()
+                    }
+
+
                 },
                 colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFFFB8500))
             ) {
@@ -505,6 +534,13 @@ private fun RadioButtonStyle(selectedItem: String, details:String) {
             }
         }
     }
+}
+
+
+fun bitmapToByteArray(bitmap: Bitmap): ByteArray {
+    val outputStream = ByteArrayOutputStream()
+    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
+    return outputStream.toByteArray()
 }
 
 @Preview(showBackground = true)
