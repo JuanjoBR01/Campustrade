@@ -77,9 +77,7 @@ dependencies {
     implementation platform('com.google.firebase:firebase-bom:31.2.3')
     implementation 'com.google.firebase:firebase-analytics-ktx'
 
-    implementation("io.coil-kt:coil-compose:2.3.0")
-
-
+    //implementation("io.coil-kt:coil-compose:2.3.0")
 
     // CameraX
     def camerax_version = "1.2.1"
@@ -88,8 +86,7 @@ dependencies {
     implementation "androidx.camera:camera-view:1.0.0-alpha27"
 
     // Coil
-    implementation "io.coil-kt:coil-compose:1.4.0"
-
+    implementation "io.coil-kt:coil-compose:2.0.0-alpha05"
     implementation 'com.google.firebase:firebase-auth-ktx'
 
 // Icons
@@ -100,6 +97,16 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.4"
     implementation 'com.google.firebase:firebase-crashlytics-ktx'
     implementation "androidx.lifecycle:lifecycle-viewmodel-compose:2.5.1"
+    implementation 'androidx.activity:activity-ktx:1.7.0'
+
+    modules {
+        module("org.jetbrains.kotlin:kotlin-stdlib-jdk7") {
+            replacedBy("org.jetbrains.kotlin:kotlin-stdlib", "kotlin-stdlib-jdk7 is now part of kotlin-stdlib")
+        }
+        module("org.jetbrains.kotlin:kotlin-stdlib-jdk8") {
+            replacedBy("org.jetbrains.kotlin:kotlin-stdlib", "kotlin-stdlib-jdk8 is now part of kotlin-stdlib")
+        }
+    }
 
 
 }
