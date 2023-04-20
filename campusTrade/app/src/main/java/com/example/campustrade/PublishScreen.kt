@@ -45,7 +45,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.toSize
-import androidx.core.content.FileProvider
 import coil.compose.rememberAsyncImagePainter
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.FirebaseFirestore
@@ -58,7 +57,7 @@ import java.util.*
 import java.util.UUID.*
 import java.text.SimpleDateFormat
 import androidx.compose.runtime.Composable
-import androidx.core.content.ContextCompat.startActivity
+import androidx.compose.runtime.livedata.observeAsState
 
 
 class PublishScreen : ComponentActivity() {
@@ -70,14 +69,14 @@ class PublishScreen : ComponentActivity() {
             uris = Uri.parse(param1)
         }
         setContent{
-            PublishScreenV(uris)
+            PublishScreenV(uris, PublishViewModel())
         }
     }
 }
 
 @Composable
-fun PublishScreenV(uris: Uri?) {
-    TopView(uris)
+fun PublishScreenV(uris: Uri?, viewModel: PublishViewModel) {
+    TopView(uris, viewModel)
 }
 
 @Composable
@@ -104,8 +103,30 @@ fun TopBarPublishScreen(){
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun TopView(uris: Uri?) {
+fun TopView(uris: Uri?, viewModel: PublishViewModel) {
+
+    //Contex of application
     val context = LocalContext.current
+
+    //Tipos de productos
+    val prodType = arrayOf("Material", "Product", "Accessory", "Other")
+
+    //Atributo nombre del producto a agregar
+    val prodName:String by viewModel.prodName.observeAsState(initial = "")
+
+    //Atributo precio del producto a agregar
+    val prodPrice:String by viewModel.prodPrice.observeAsState(initial = "")
+
+    //Atributo descripcion del producto a agregar
+    val prodDescr:String by viewModel.prodDescr.observeAsState(initial = "")
+
+    //Atributo de los tags del producto a agregar
+    val prodTags:String by viewModel.prodTags.observeAsState(initial = "")
+
+    //Atributo new or old del producto
+    val selectedItem:String by viewModel.selectedItem.observeAsState(initial = "New")
+
+
 
     val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
     val currentDate = Date()
@@ -113,9 +134,9 @@ fun TopView(uris: Uri?) {
 
 
     var contentImage = remember{
-        mutableStateOf<Uri?>(null)
+        mutableStateOf<Uri?>(uris)
     }
-    contentImage.value = uris
+
     var tempImageFilePath = ""
     var tookPic = remember{
         mutableStateOf<Boolean>(false)
@@ -133,27 +154,9 @@ fun TopView(uris: Uri?) {
     val state = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
     val scope = rememberCoroutineScope()
 
-    var prodName by remember {
-        mutableStateOf("")
-    }
 
-    var prodPrice by remember {
-        mutableStateOf("")
-    }
 
-    var prodDescr by remember {
-        mutableStateOf("")
-    }
 
-    var prodTags by remember {
-        mutableStateOf("")
-    }
-
-    var selectedItem by remember{
-        mutableStateOf("New")
-    }
-
-    val prodType = arrayOf("Material", "Product", "Accessory", "Other")
 
     var expanded by remember {
         mutableStateOf(false)
@@ -193,11 +196,7 @@ fun TopView(uris: Uri?) {
                 OutlinedTextField(
                     value = prodName,
                     label = { Text(text = "Product Name") },
-                    onValueChange = { newText: String ->
-                        if (newText.length <= 30) {
-                            prodName = newText
-                        }
-                    })
+                    onValueChange = { viewModel.onPublishChanged(it, prodPrice, prodDescr, prodTags, selectedItem) })
 
                 Spacer(modifier = Modifier.height(12.dp))
 
@@ -205,11 +204,7 @@ fun TopView(uris: Uri?) {
                     value = prodPrice,
                     label = { Text(text = "Price") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    onValueChange = { newPrice: String ->
-                        if (newPrice.length <= 9) {
-                            prodPrice = newPrice
-                        }
-                    })
+                    onValueChange = { viewModel.onPublishChanged(prodName, it, prodDescr, prodTags, selectedItem) })
             }
 
         }
@@ -226,11 +221,7 @@ fun TopView(uris: Uri?) {
                     .height(90.dp),
                 value = prodDescr,
                 label = { Text(text = "Description") },
-                onValueChange = { newDescrp: String ->
-                    if (newDescrp.length <= 250) {
-                        prodDescr = newDescrp
-                    }
-                })
+                onValueChange = { viewModel.onPublishChanged(prodName, prodPrice, it, prodTags, selectedItem)  })
         }
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -249,7 +240,7 @@ fun TopView(uris: Uri?) {
                 modifier = Modifier
                     .selectable(
                         selected = (selectedItem == "New"),
-                        onClick = { selectedItem = "New" },
+                        onClick = {viewModel.onPublishChanged(prodName, prodPrice, prodDescr, prodTags, "New")},
                         role = Role.RadioButton
                     )
                     .padding(vertical = 4.dp, horizontal = 8.dp)
@@ -260,7 +251,7 @@ fun TopView(uris: Uri?) {
                 modifier = Modifier
                     .selectable(
                         selected = (selectedItem == "Used"),
-                        onClick = { selectedItem = "Used" },
+                        onClick = { viewModel.onPublishChanged(prodName, prodPrice, prodDescr, prodTags, "Used")},
                         role = Role.RadioButton
                     )
                     .padding(vertical = 8.dp)
@@ -321,11 +312,7 @@ fun TopView(uris: Uri?) {
                     .height(90.dp),
                 value = prodTags,
                 label = { Text(text = "Tags") },
-                onValueChange = { newTags: String ->
-                    if (newTags.length <= 250) {
-                        prodTags = newTags
-                    }
-                })
+                onValueChange = {viewModel.onPublishChanged(prodName, prodPrice, prodDescr, it, selectedItem)})
         }
 
         Column(
@@ -352,22 +339,14 @@ fun TopView(uris: Uri?) {
                         )
                         Toast.makeText(context, "Publishing...", Toast.LENGTH_LONG).show()
                         val imgUrl = uploadImageToDataBase(context,contentImage.value,productOb)
-                        prodName = ""
-                        prodPrice = ""
-                        prodDescr = ""
-                        selectedItem = ""
+                        viewModel.onPublishChanged("", "", "", "", "Used")
                         valueType = ""
-                        prodTags=""
                         contentImage.value = null
                     }
                     catch (e: Exception){
                         Toast.makeText(context, "Error While Trying upload. Please Try Again", Toast.LENGTH_LONG).show()
-                        prodName = ""
-                        prodPrice = ""
-                        prodDescr = ""
-                        selectedItem = ""
+                        viewModel.onPublishChanged("", "", "", "", "Used")
                         valueType = ""
-                        prodTags=""
                         contentImage.value = null
                     }
 
@@ -604,5 +583,5 @@ fun bitmapToByteArray(bitmap: Bitmap): ByteArray {
 @Preview(showBackground = true)
 @Composable
 fun PreviewPublishScreen(){
-    PublishScreenV(null)
+    PublishScreenV(null,PublishViewModel())
 }
