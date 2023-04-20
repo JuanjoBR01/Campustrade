@@ -173,7 +173,7 @@ class HomeViewModel(private val repository: HomeRepository): ViewModel() {
         }
         else if(name == "Publish")
         {
-            val intent = Intent(context, PublishActivity::class.java)
+            val intent = Intent(context, PublishScreen::class.java)
             context.startActivity(intent)
         }
         else if(name == "History")

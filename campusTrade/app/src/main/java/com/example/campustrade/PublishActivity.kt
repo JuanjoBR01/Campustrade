@@ -1,5 +1,6 @@
 package com.example.campustrade
 
+
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -132,7 +133,7 @@ fun MyBodyPublish(context: Context){
                         context.startActivity(intent)
                     }
                 )
-                )
+        )
         Column(modifier = Modifier
             .padding(start = 16.dp)) {
             Text(text = "Name your product")
@@ -140,16 +141,16 @@ fun MyBodyPublish(context: Context){
                 singleLine = true,
                 shape = RoundedCornerShape(22.dp),
                 placeholder={Text(text="Sunglasses...",fontSize = 12.sp,)},onValueChange = { newText ->
-                valueProduct = newText
-            },modifier = Modifier
+                    valueProduct = newText
+                },modifier = Modifier
                     .height(45.dp))
             Text(text = "Give it a price")
             TextField(value = valuePrice,
                 singleLine = true,
                 shape = RoundedCornerShape(22.dp),
                 placeholder={Text(text="10000",fontSize = 12.sp,)},onValueChange = { newText2 ->
-                valuePrice = newText2
-            },modifier = Modifier
+                    valuePrice = newText2
+                },modifier = Modifier
                     .height(45.dp))
         }
     }
@@ -259,11 +260,11 @@ fun MyBodyPublish(context: Context){
             // on below line creating an instance of firebase firestore.
             val db: FirebaseFirestore = FirebaseFirestore.getInstance()
             //creating a collection reference for our Firebase Firestore database.
-            val dbCourses: CollectionReference = db.collection("ProductsDB")
+            //val dbCourses: CollectionReference = db.collection("ProductsDB")
             //adding our data to our courses object class.
-            val productOb = ProductObj(valueProduct,valuePrice.toInt(),valueDescription,selectedItem,valueType,valueTags)
+           // val productOb = ProductObj("",valueProduct,valuePrice.toInt(),valueDescription,selectedItem,valueType,valueTags)
             //below method is use to add data to Firebase Firestore.
-            dbCourses.add(productOb).addOnSuccessListener {
+           // dbCourses.add(productOb).addOnSuccessListener {
                 // after the data addition is successful
                 // we are displaying a success toast message.
                 Toast.makeText(
@@ -271,11 +272,11 @@ fun MyBodyPublish(context: Context){
                     "Your Course has been added to Firebase Firestore",
                     Toast.LENGTH_SHORT
                 ).show()
-            }.addOnFailureListener { e ->
+            //}.addOnFailureListener { e ->
                 // this method is called when the data addition process is failed.
                 // displaying a toast message when data addition is failed.
                 Toast.makeText(context, "Fail to add course", Toast.LENGTH_SHORT).show()
-            }
+           // }
         },
             colors = ButtonDefaults.buttonColors(backgroundColor =  Color(0xFFFB8500))) {
             Text(text = "Publish")
