@@ -1,75 +1,53 @@
 package com.example.campustrade
 
-import android.content.Intent
-import android.widget.Toast
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import android.util.Patterns
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.example.campustrade.ui.LoginUiState
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import com.google.firebase.auth.FirebaseAuth
-import kotlinx.coroutines.flow.update
+import com.google.firebase.auth.FirebaseUser
 
+class LoginViewModel(private val repository: LoginRepository): ViewModel(){
+    private val _email = MutableLiveData<String>()
+    val email: LiveData<String> = _email
+    private var answer: String = ""
 
+    private val _password = MutableLiveData<String>()
+    val password: LiveData<String> = _password
 
-class LoginViewModel: ViewModel() {
-    private val _uiState = MutableStateFlow(LoginUiState())
-    val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
+    private val _loginEnable = MutableLiveData<Boolean>()
+    val loginEnable: LiveData<Boolean> = _loginEnable
 
-    private lateinit var currentUser: String
-
-    var userMail by mutableStateOf("")
-        private set
-
-    var userPassword by mutableStateOf("")
-        private set
-
-    private val maxLen = 31
-
-    fun resetView () {
-        _uiState.value = LoginUiState("", "")
+    fun onLoginChanged(email: String, password: String){
+        _email.value = email
+        _password.value = password
+        _loginEnable.value = isValidEmail(email) && isValidPassword(password)
     }
 
-    init {
-        resetView()
-    }
+    private fun isValidEmail(email: String): Boolean = Patterns.EMAIL_ADDRESS.matcher(email).matches()
+
+    private fun isValidPassword(password: String): Boolean = password.length > 6
+    private val firebaseAuth = FirebaseAuth.getInstance()
 
 
-    fun updateUserMail(emailField: String){
-        if (emailField.length < maxLen){
-            userMail = emailField
-        }
-    }
 
-    fun updateUserPassword(passwordField: String){
-        if (passwordField.length < maxLen){
-            userPassword = passwordField
-        }
-    }
+    private var _currentUser = MutableLiveData<FirebaseUser?>()
+    val currentUser: LiveData<FirebaseUser?> = _currentUser
 
-    fun sendData (): String {
-        var txState: String = "defaultValue"
-        if (userMail != "" && userPassword != "") {
-            FirebaseAuth
-                .getInstance()
-                .signInWithEmailAndPassword(userMail, userPassword)
-                .addOnCompleteListener() {
-                    txState = if (it.isSuccessful) {
-                        "Login Successful"
-                    } else {
-                        "It was a problem logging you in"
-                    }
+
+    fun onLoginSelected(email: String, password: String): Boolean{
+        var aux = true
+        firebaseAuth.signInWithEmailAndPassword(email, password)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    _currentUser.value = firebaseAuth.currentUser
+
+                } else {
+                    //_signInResult.value = Result.failure(task.exception ?: Exception("Unknown error occurred")
                 }
-        } else {
-            txState = "The credentials are invalid"
-        }
-        return txState
+            }
+        return aux
     }
+
 
 }
