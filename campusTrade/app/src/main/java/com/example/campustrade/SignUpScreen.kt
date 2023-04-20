@@ -272,6 +272,8 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier, viewModel: SignUpViewM
                     } else {
                         "Failed to create user in the DB"
                     }
+
+                    viewModel.restartForm()
                 }
 
                 Toast.makeText(

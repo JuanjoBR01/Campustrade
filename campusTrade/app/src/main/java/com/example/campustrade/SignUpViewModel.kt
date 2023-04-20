@@ -110,8 +110,11 @@ class SignUpViewModel(private val repository: SignUpRepository): ViewModel() {
         return aux
     }
 
-
-
-
-
+    fun restartForm() {
+        _valueType.value = ""
+        _name.value = ""
+        _email.value = ""
+        _password.value = ""
+        _confirmPassword.value = ""
+    }
 }
