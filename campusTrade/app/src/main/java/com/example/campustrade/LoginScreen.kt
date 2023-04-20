@@ -121,8 +121,19 @@ fun LoginScreenComposable(modifier: Modifier = Modifier, viewModel: LoginViewMod
             onClick = {
                 var aux = viewModel.onLoginSelected(emailField, passwordField)
                 if (aux) {
+                    Toast.makeText(
+                        context,
+                        "Login successful",
+                        Toast.LENGTH_LONG
+                    ).show()
                     val intent = Intent(context, HomeActivity::class.java)
                     context.startActivity(intent)
+                } else {
+                    Toast.makeText(
+                        context,
+                        "There was a problem logging you in.",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
             },
             colors = ButtonDefaults.buttonColors(
@@ -143,8 +154,6 @@ fun LoginScreenComposable(modifier: Modifier = Modifier, viewModel: LoginViewMod
         }
 
         Spacer(modifier = Modifier.height(15.dp))
-
-        Text(text = " " + currentUser?.email)
 
         Button(
             onClick = { val intent = Intent(context, SignUpScreen::class.java)
