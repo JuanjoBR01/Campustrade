@@ -4,10 +4,13 @@ import android.Manifest
 import android.content.ContentValues.TAG
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -122,8 +125,17 @@ fun BodyLaunchCamera(){
         }) {
             Text("Take Picture")
         }
-        Button(onClick = {  }) {
-            Text("Analyze Picture")
+        Button(onClick = {
+            val inputStream = context.contentResolver.openInputStream(contentImage.value!!)
+            val bitmap = BitmapFactory.decodeStream(inputStream)
+            if(!isImageTooBrightOrOpaque(bitmap)){
+                Toast.makeText(context, "Congrats! Great Image", Toast.LENGTH_LONG).show()
+            }
+            else{
+                Toast.makeText(context, "Image is too opaque or too bright", Toast.LENGTH_LONG).show()
+            }
+        }) {
+            Text("Analyze Pictures Brightness and Opaque")
         }
         Button(onClick = {
             val param1 = contentImage.value
@@ -214,11 +226,38 @@ private fun getPermission(
     }
 }
 
-
 fun createImageFile(context: Context): File {
     val storageDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
     return File.createTempFile("temp_image",".jpg",storageDir)
 }
+
+fun isImageTooBrightOrOpaque(bitmap: Bitmap): Boolean {
+    val pixels = IntArray(bitmap.width * bitmap.height)
+    bitmap.getPixels(pixels, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
+
+    var n:Float = 0.0F
+    var r:Float = 0.0F
+    var g:Float = 0.0F
+    var b:Float = 0.0F
+
+    for (pixel in pixels) {
+        val color = Color(pixel)
+        r += color.red
+        g += color.green
+        b += color.blue
+        n += 1
+    }
+
+    val averageBrightness = (r + b + g) / (n*3)
+    Log.d(TAG, "Red: "+ r.toString() + "-----------------------------------------------" )
+    Log.d(TAG, "Blue: "+ b.toString() + "-----------------------------------------------" )
+    Log.d(TAG, "Green: "+ g.toString() + "-----------------------------------------------" )
+    Log.d(TAG, "N: "+ n.toString() + "-----------------------------------------------" )
+    Log.d(TAG, "Avg Brigh "+ averageBrightness.toString() + "-----------------------------------------------" )
+
+    return averageBrightness > 0.85 || averageBrightness < 0.2
+}
+
 
 
 
