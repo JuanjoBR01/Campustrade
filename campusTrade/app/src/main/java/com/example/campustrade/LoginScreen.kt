@@ -14,22 +14,23 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.*
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import android.content.Intent
+import androidx.compose.ui.graphics.Color
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.platform.LocalContext
 import com.example.campustrade.ui.theme.CampustradeTheme
-import androidx.compose.material.lightColors
 import com.example.campustrade.ui.theme.darkBlue
 import com.example.campustrade.ui.theme.orange
 import com.example.campustrade.ui.theme.yellow
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 
 
 class LoginScreen : ComponentActivity() {
@@ -38,7 +39,7 @@ class LoginScreen : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             CampustradeTheme{
-                LoginScreenComposable()
+                LoginScreenComposable(viewModel = LoginViewModel(LoginRepository()))
             }
         }
     }
@@ -47,15 +48,13 @@ class LoginScreen : ComponentActivity() {
 
 
 @Composable
-fun LoginScreenComposable(modifier: Modifier = Modifier) {
+fun LoginScreenComposable(modifier: Modifier = Modifier, viewModel: LoginViewModel) {
 
-    var emailField by remember {
-        mutableStateOf("")
-    }
+    val emailField: String by viewModel.email.observeAsState(initial = "")
+    val passwordField: String by viewModel.password.observeAsState(initial = "")
+    val loginEnable: Boolean by viewModel.loginEnable.observeAsState(initial = false)
+    val currentUser: FirebaseUser? by viewModel.currentUser.observeAsState(initial = null)
 
-    var passwordField by remember {
-        mutableStateOf("")
-    }
 
     val context = LocalContext.current
 
@@ -80,9 +79,7 @@ fun LoginScreenComposable(modifier: Modifier = Modifier) {
 
         OutlinedTextField(
             value = emailField,
-            onValueChange = {newText ->
-                emailField = newText
-            },
+            onValueChange = {viewModel.onLoginChanged(it, passwordField)},
             label = { Text(stringResource(id = R.string.user_login_view),
                 color = darkBlue,
                 style = MaterialTheme.typography.body1) },
@@ -102,9 +99,7 @@ fun LoginScreenComposable(modifier: Modifier = Modifier) {
 
         OutlinedTextField(
             value = passwordField,
-            onValueChange = {newValue ->
-                passwordField = newValue
-            },
+            onValueChange = {viewModel.onLoginChanged(emailField, it)},
             label = { Text(stringResource(id = R.string.password_login_view),
                 color = darkBlue) },
             leadingIcon = {
@@ -124,43 +119,23 @@ fun LoginScreenComposable(modifier: Modifier = Modifier) {
 
         Button(
             onClick = {
-                if (emailField != "" && passwordField != "") {
-                    FirebaseAuth
-                        .getInstance()
-                        .signInWithEmailAndPassword(emailField, passwordField)
-                        .addOnCompleteListener() {
-                            if (it.isSuccessful) {
-                                Toast.makeText(
-                                    context,
-                                    "Login successful",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                                val intent = Intent(context, HomeActivity::class.java)
-                                context.startActivity(intent)
-                            } else {
-                                Toast.makeText(
-                                    context,
-                                    "It was a problem logging you in",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                        }
-                } else{
-                    Toast.makeText(
-                        context,
-                        "The credentials are invalid",
-                        Toast.LENGTH_SHORT
-                    ).show()
-
-                }},
+                var aux = viewModel.onLoginSelected(emailField, passwordField)
+                if (aux) {
+                    val intent = Intent(context, HomeActivity::class.java)
+                    context.startActivity(intent)
+                }
+            },
             colors = ButtonDefaults.buttonColors(
-                backgroundColor = orange),
+                backgroundColor = orange,
+                disabledBackgroundColor = Color(0xFF535D64)
+            ),
             modifier = Modifier.width(200.dp),
             elevation = ButtonDefaults.elevation(
                 defaultElevation = 6.dp,
                 pressedElevation = 8.dp,
                 disabledElevation = 0.dp
-            )
+            ),
+            enabled = loginEnable
 
         ) {
             Text(stringResource(id = R.string.log_in_button),
@@ -168,6 +143,8 @@ fun LoginScreenComposable(modifier: Modifier = Modifier) {
         }
 
         Spacer(modifier = Modifier.height(15.dp))
+
+        Text(text = " " + currentUser?.email)
 
         Button(
             onClick = { val intent = Intent(context, SignUpScreen::class.java)
@@ -209,6 +186,6 @@ fun LoginScreenComposable(modifier: Modifier = Modifier) {
 @Composable
 fun LoginScreenPreview() {
     CampustradeTheme {
-        LoginScreenComposable()
+        LoginScreenComposable(viewModel = LoginViewModel(LoginRepository()))
     }
 }
