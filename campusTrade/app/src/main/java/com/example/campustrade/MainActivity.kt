@@ -17,7 +17,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             CampustradeTheme{
-                LoginScreenComposable(viewModel = LoginViewModel(LoginRepository()))
+                LoginScreenComposable(viewModel = LoginViewModel())
 
             }
         }
@@ -33,6 +33,6 @@ fun Greeting(name: String) {
 @Composable
 fun DefaultPreview() {
     CampustradeTheme {
-        LoginScreenComposable(viewModel = LoginViewModel(LoginRepository()))
+        LoginScreenComposable(viewModel = LoginViewModel())
     }
 }

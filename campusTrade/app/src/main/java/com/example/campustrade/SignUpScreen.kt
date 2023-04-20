@@ -16,16 +16,18 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.runtime.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.*
-import androidx.compose.ui.geometry.Size
+//import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.unit.toSize
+//import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.activity.ComponentActivity
 import android.os.Bundle
 import android.util.Log
+import android.util.Patterns
 import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.VisualTransformation
 import com.example.campustrade.ui.theme.CampustradeTheme
@@ -53,7 +55,7 @@ class SignUpScreen : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             CampustradeTheme {
-                SignUpScreenComposable()
+                SignUpScreenComposable(viewModel = SignUpViewModel())
             }
         }
     }
@@ -61,35 +63,17 @@ class SignUpScreen : ComponentActivity() {
 }
 
 @Composable
-fun SignUpScreenComposable(modifier: Modifier = Modifier) {
-
-    var expanded by remember {
-        mutableStateOf(false)
-    }
-
-    var mTextFieldSize by remember { mutableStateOf(Size.Zero)}
-
+fun SignUpScreenComposable(modifier: Modifier = Modifier, viewModel: SignUpViewModel) {
+    //var mTextFieldSize by remember { mutableStateOf(Size.Zero)}
     val prodType = arrayOf("Material", "Product", "Accessory", "Other")
 
-    var valueType by remember {
-        mutableStateOf(prodType[0])
-    }
+    val expanded: Boolean by viewModel.expanded.observeAsState(initial = false)
+    val valueType: String by viewModel.valueType.observeAsState(initial = prodType[0])
+    val nameField: String by viewModel.name.observeAsState(initial = "")
+    val emailField: String by viewModel.email.observeAsState(initial = "")
+    val secretField: String by viewModel.password.observeAsState(initial = "")
+    val confirmSecretField: String by viewModel.confirmPassword.observeAsState(initial = "")
 
-    var nameField by remember {
-        mutableStateOf("")
-    }
-
-    var emailField by remember {
-        mutableStateOf("")
-    }
-
-    var secretField by remember {
-        mutableStateOf("")
-    }
-
-    var confirmSecretField by remember {
-        mutableStateOf("")
-    }
 
     val context = LocalContext.current
 
@@ -142,7 +126,11 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier) {
 
         TextBoxField(
             nameField,
-            {newValue -> nameField = newValue},
+            {
+                    if(it.length < 51) {
+                        viewModel.onNameChange(it)
+                    }
+            },
             stringResource(id = R.string.name_sign_up_form),
             VisualTransformation.None)
 
@@ -150,7 +138,10 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier) {
 
         TextBoxField(
             emailField,
-            {newValue -> emailField = newValue},
+            {newValue ->
+                if (newValue.length <41){
+                    viewModel.onEmailChange(newValue)
+                }},
             label = stringResource(id = R.string.email_sign_up_form),
             VisualTransformation.None
         )
@@ -161,25 +152,28 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier) {
             .padding(start = 32.dp, end = 32.dp, bottom = 10.dp)){
             OutlinedTextField(
                 value = valueType,
-                onValueChange = { valueType = it },
+                onValueChange = {
+                    if (it.length < 41){
+                        viewModel.onValueTypeChange(it)
+                    }
+                                },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .onGloballyPositioned { coordinates ->
+                    .onGloballyPositioned { //coordinates ->
                         // This value is used to assign to
                         // the DropDown the same width
-                        mTextFieldSize = coordinates.size.toSize()
+                        // mTextFieldSize = coordinates.size.toSize()
                     },
                 label = {Text("Label")},
                 trailingIcon = {
                     Icon(painter = painterResource(id = R.drawable.baseline_expand_more_black_48),"contentDescription",
-                        Modifier.clickable { expanded = !expanded })
+                        Modifier.clickable { viewModel.onExpandedChange() })
                 }
             )
 
-
             DropdownMenu(
                 expanded = expanded,
-                onDismissRequest = { expanded = false },
+                onDismissRequest = { viewModel.setExpandedFalse() },
                 modifier = Modifier
                     .width(100.dp)
                     .background(Color.White)
@@ -187,8 +181,8 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier) {
             ) {
                 prodType.forEach { label ->
                     DropdownMenuItem(onClick = {
-                        valueType = label
-                        expanded = false
+                        viewModel.onValueTypeChange(label)
+                        viewModel.setExpandedFalse()
                     }) {
                         Text(text = label,
                             modifier
@@ -205,14 +199,20 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier) {
 
         TextBoxField(
             secretField,
-            {newValue -> secretField = newValue},
+            {newValue ->
+                if (newValue.length < 51) {
+                    viewModel.onPasswordChange(newValue)
+                }},
             label = stringResource(id = R.string.password_sign_up_form),
             PasswordVisualTransformation())
 
         Spacer(modifier = Modifier.height(10.dp))
 
         TextBoxField(confirmSecretField,
-            {newValue -> confirmSecretField = newValue},
+            {newValue ->
+                if (newValue.length < 51) {
+                    viewModel.onConfirmPasswordChange(newValue)
+                }},
             label = stringResource(id = R.string.confirm_password_sign_up_form),
             PasswordVisualTransformation())
 
@@ -220,59 +220,32 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier) {
 
         Button(
             onClick = {
-                if ( secretField == confirmSecretField && emailField != "" && secretField != "") {
-                    FirebaseAuth
-                        .getInstance()
-                        .createUserWithEmailAndPassword(emailField, secretField)
-                        .addOnCompleteListener(){
-                            if (it.isSuccessful) {
-                                Toast.makeText(
-                                    context,
-                                    "Data sent to Firebase",
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                var aux = false
+                var mes = ""
+                if (secretField.length < 6 || confirmSecretField.length < 6) {
+                    mes = "The password needs at least 6 characters"
+                } else if (secretField != confirmSecretField) {
+                    mes = "The password fields do not match"
+                } else if (!Patterns.EMAIL_ADDRESS.matcher(emailField).matches()) {
+                    mes = "Enter a valid email"
+                } else if (nameField.isEmpty()) {
+                    mes = "Enter a valid name"
+                } else {
+                    aux = viewModel.createUser(valueType, nameField, emailField, secretField)
+                    mes = if (aux) {
+                        "User created in Auth system and FireStore DB"
+                    } else {
+                        "Failed to create user in the DB"
+                    }
+                }
 
-                                // on below line creating an instance of firebase firesStore.
-                                val db: FirebaseFirestore = FirebaseFirestore.getInstance()
-                                //creating a collection reference for our Firebase FireStore database.
-                                val dbUsers: CollectionReference = db.collection("users")
-                                //adding our data to our courses object class.
-                                val userObj = UserObj(nameField, emailField,secretField,"https://firebasestorage.googleapis.com/v0/b/campustrade-6d7b6.appspot.com/o/images%2Fowl.jpg?alt=media&token=d9dd4852-dcad-4811-9739-36909d731a6d")
-                                //below method is use to add data to Firebase FireStore.
-                                dbUsers.add(userObj).addOnSuccessListener {
-                                    // after the data addition is successful
-                                    // we are displaying a success toast message.
-                                    Toast.makeText(
-                                        context,
-                                        "User Created in FireStore Database",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                }.addOnFailureListener { e ->
-                                    // this method is called when the data addition process is failed.
-                                    // displaying a toast message when data addition is failed.
-                                    Toast.makeText(context, "Fail to add course", Toast.LENGTH_SHORT).show()
-                                }
+                Toast.makeText(
+                    context,
+                    mes,
+                    Toast.LENGTH_LONG
+                ).show()
 
-
-
-
-
-                            } else {
-                                Toast.makeText(
-                                    context,
-                                    "It was a problem sending the data to Firebase",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                        }
-                } else{
-                    Toast.makeText(
-                        context,
-                        "The password fields do not match",
-                        Toast.LENGTH_SHORT
-                    ).show()
-
-                }},
+                },
             colors = ButtonDefaults.buttonColors(
                 backgroundColor = orange
             ),
@@ -315,6 +288,6 @@ fun TextBoxField(value: String, onValueChange: (String) -> Unit, label: String, 
 @Composable
 fun SignUpScreenPreview() {
     CampustradeTheme {
-        SignUpScreenComposable()
+        SignUpScreenComposable(viewModel = SignUpViewModel())
     }
 }

@@ -4,13 +4,11 @@ import android.util.Patterns
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 
-class LoginViewModel(private val repository: LoginRepository): ViewModel(){
+class LoginViewModel: ViewModel(){
     private val _email = MutableLiveData<String>()
     val email: LiveData<String> = _email
-    private var answer: String = ""
 
     private val _password = MutableLiveData<String>()
     val password: LiveData<String> = _password
@@ -27,7 +25,7 @@ class LoginViewModel(private val repository: LoginRepository): ViewModel(){
     private fun isValidEmail(email: String): Boolean = Patterns.EMAIL_ADDRESS.matcher(email).matches()
 
     private fun isValidPassword(password: String): Boolean = password.length > 6
-    private val firebaseAuth = FirebaseAuth.getInstance()
+    private val firebaseAuth = FirebaseClient().auth
 
 
 
@@ -41,13 +39,11 @@ class LoginViewModel(private val repository: LoginRepository): ViewModel(){
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     _currentUser.value = firebaseAuth.currentUser
-
                 } else {
                     //_signInResult.value = Result.failure(task.exception ?: Exception("Unknown error occurred")
+                    aux = false
                 }
             }
         return aux
     }
-
-
 }
