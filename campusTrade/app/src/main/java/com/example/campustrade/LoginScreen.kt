@@ -37,7 +37,7 @@ class LoginScreen : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             CampustradeTheme{
-                LoginScreenComposable(viewModel = LoginViewModel())
+                LoginScreenComposable(viewModel = LoginViewModel(LoginRepository()))
             }
         }
     }
@@ -198,6 +198,6 @@ fun LoginScreenComposable(modifier: Modifier = Modifier, viewModel: LoginViewMod
 @Composable
 fun LoginScreenPreview() {
     CampustradeTheme {
-        LoginScreenComposable(viewModel = LoginViewModel())
+        LoginScreenComposable(viewModel = LoginViewModel(LoginRepository()))
     }
 }

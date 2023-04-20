@@ -4,9 +4,11 @@ import android.util.Patterns
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.google.firebase.auth.FirebaseUser
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
-class LoginViewModel: ViewModel(){
+
+class LoginViewModel(private val repository: LoginRepository): ViewModel(){
     private val _email = MutableLiveData<String>()
     val email: LiveData<String> = _email
 
@@ -25,25 +27,17 @@ class LoginViewModel: ViewModel(){
     private fun isValidEmail(email: String): Boolean = Patterns.EMAIL_ADDRESS.matcher(email).matches()
 
     private fun isValidPassword(password: String): Boolean = password.length > 6
-    private val firebaseAuth = FirebaseClient().auth
-
-
-
-    private var _currentUser = MutableLiveData<FirebaseUser?>()
-    val currentUser: LiveData<FirebaseUser?> = _currentUser
 
 
     fun onLoginSelected(email: String, password: String): Boolean{
-        var aux = true
-        firebaseAuth.signInWithEmailAndPassword(email, password)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    _currentUser.value = firebaseAuth.currentUser
-                } else {
-                    //_signInResult.value = Result.failure(task.exception ?: Exception("Unknown error occurred")
-                    aux = false
-                }
+        var aux: Boolean = true
+        runBlocking {
+            launch {
+                aux = repository.makeLogin(email, password)
             }
+        }
+
         return aux
+
     }
 }

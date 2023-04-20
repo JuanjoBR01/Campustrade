@@ -11,7 +11,7 @@ class HomeRepository: HomeRepositoryInterface {
 
         //var listResp : List<ProductDB> = emptyList()
 
-        // on below line creating an instance of firebase firestore.
+        // on below line creating an instance of firebase fireStore.
         val db: FirebaseFirestore = FirebaseFirestore.getInstance()
         val collec = db.collection("ProductsDB")
 

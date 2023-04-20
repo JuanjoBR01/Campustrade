@@ -16,9 +16,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.runtime.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.*
-//import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.layout.onGloballyPositioned
-//import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.activity.ComponentActivity
 import android.os.Bundle
@@ -34,9 +32,6 @@ import com.example.campustrade.ui.theme.CampustradeTheme
 import com.example.campustrade.ui.theme.darkBlue
 import com.example.campustrade.ui.theme.orange
 import com.example.campustrade.ui.theme.white
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.CollectionReference
-import com.google.firebase.firestore.FirebaseFirestore
 
 
 class SignUpScreen : ComponentActivity() {
@@ -55,7 +50,7 @@ class SignUpScreen : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             CampustradeTheme {
-                SignUpScreenComposable(viewModel = SignUpViewModel())
+                SignUpScreenComposable(viewModel = SignUpViewModel(SignUpRepository()))
             }
         }
     }
@@ -220,8 +215,8 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier, viewModel: SignUpViewM
 
         Button(
             onClick = {
-                var aux = false
-                var mes = ""
+                var aux: Boolean
+                var mes: String
                 if (secretField.length < 6 || confirmSecretField.length < 6) {
                     mes = "The password needs at least 6 characters"
                 } else if (secretField != confirmSecretField) {
@@ -288,6 +283,6 @@ fun TextBoxField(value: String, onValueChange: (String) -> Unit, label: String, 
 @Composable
 fun SignUpScreenPreview() {
     CampustradeTheme {
-        SignUpScreenComposable(viewModel = SignUpViewModel())
+        SignUpScreenComposable(viewModel = SignUpViewModel(SignUpRepository()))
     }
 }

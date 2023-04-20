@@ -1,13 +1,32 @@
 package com.example.campustrade
 
-import com.google.firebase.auth.FirebaseAuth
+
+import android.util.Log
+import com.example.campustrade.FirebaseClient
+import com.example.campustrade.SignUpRepositoryInterface
+import com.example.campustrade.UserObj
+
+
+import com.google.firebase.firestore.CollectionReference
 
 class LoginRepository: LoginRepositoryInterface {
 
-    override suspend fun makeLogin(email: String, password: String): String {
-        var couch = ""
-
-
-        return couch
+    private val firebaseAuth = FirebaseClient().auth
+    override suspend fun makeLogin(email: String, password: String): Boolean {
+        var aux = true
+        firebaseAuth.signInWithEmailAndPassword(email, password)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    aux = true
+                    Log.d("TAG", "User logged successfully")
+                } else {
+                    //_signInResult.value = Result.failure(task.exception ?: Exception("Unknown error occurred")
+                    aux = false
+                    Log.d("TAG", "User couldn't log")
+                }
+            }
+        return aux
     }
+
+
 }
