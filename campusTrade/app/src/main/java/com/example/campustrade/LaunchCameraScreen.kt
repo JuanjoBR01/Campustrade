@@ -18,10 +18,13 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -41,24 +44,14 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.*
 import java.io.File
 
-
-class LaunchCameraScreen : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent{
-            LaunchCameraScreenV()
-        }
-    }
-}
-
-
 @Composable
-fun LaunchCameraScreenV()
+fun LaunchCameraScreenV(launchCameraViewModel: LaunchCameraViewModel)
 {
     Column(Modifier
-        .fillMaxWidth()){
+        .fillMaxWidth()
+        .verticalScroll(rememberScrollState())){
         TopBarLaunchCamera()
-        BodyLaunchCamera()
+        BodyLaunchCamera(launchCameraViewModel)
     }
 
 }
@@ -86,17 +79,18 @@ fun TopBarLaunchCamera(){
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun BodyLaunchCamera(){
-    var contentImage = remember{
-        mutableStateOf<Uri?>(null)
-    }
+fun BodyLaunchCamera(viewModel: LaunchCameraViewModel){
+
+    //Atributo de la imagen a mostrar
+    val contentImageLC: Uri? by viewModel.contentImageLC.observeAsState(initial = null)
+
 
     UpperLaunchCamera()
     Column(modifier = Modifier
         .padding(horizontal = 90.dp, vertical = 90.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally) {
-        CenterImage(imagePath = contentImage.value)
+        CenterImage(imagePath = contentImageLC)
     }
     FeatureThatRequiresPermissions()
     val context = LocalContext.current
@@ -108,7 +102,7 @@ fun BodyLaunchCamera(){
     val camera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()){ success->
         tookPic.value = success
         if(success){
-            contentImage.value = tempImageUri
+            viewModel.onChangeContentImg(tempImageUri)
         }
     }
 
@@ -126,7 +120,7 @@ fun BodyLaunchCamera(){
             Text("Take Picture")
         }
         Button(onClick = {
-            val inputStream = context.contentResolver.openInputStream(contentImage.value!!)
+            val inputStream = context.contentResolver.openInputStream(contentImageLC!!)
             val bitmap = BitmapFactory.decodeStream(inputStream)
             if(!isImageTooBrightOrOpaque(bitmap)){
                 Toast.makeText(context, "Congrats! Great Image", Toast.LENGTH_LONG).show()
@@ -138,7 +132,7 @@ fun BodyLaunchCamera(){
             Text("Analyze Pictures Brightness and Opaque")
         }
         Button(onClick = {
-            val param1 = contentImage.value
+            val param1 = contentImageLC
             val intent = Intent(context, PublishScreen::class.java).apply {
                 putExtra("imgUris", param1.toString())
             }
@@ -258,11 +252,8 @@ fun isImageTooBrightOrOpaque(bitmap: Bitmap): Boolean {
     return averageBrightness > 0.85 || averageBrightness < 0.2
 }
 
-
-
-
 @Preview(showBackground = true)
 @Composable
 fun PreviewLaunchCameraScreenV(){
-    LaunchCameraScreenV()
+    LaunchCameraScreenV(LaunchCameraViewModel())
 }

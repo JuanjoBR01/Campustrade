@@ -58,6 +58,10 @@ class PublishViewModel :ViewModel(){
     private val _valueType = MutableLiveData<String>(" ")
     val valueType:LiveData<String> = _valueType
 
+    //Cargando
+    private val _isLoading = MutableLiveData<Boolean>(false)
+    val isLoading:LiveData<Boolean> = _isLoading
+
     //Atributo del state
     @OptIn(ExperimentalMaterialApi::class)
     private val _state= MutableLiveData<ModalBottomSheetState>()
@@ -132,7 +136,6 @@ class PublishViewModel :ViewModel(){
         }
     }
 
-
     private fun uploadProductToDB(productOb: ProductObj, context: Context) {
         // on below line creating an instance of firebase firestore.
         val db: FirebaseFirestore = FirebaseFirestore.getInstance()
@@ -152,11 +155,16 @@ class PublishViewModel :ViewModel(){
                 "Your Product has been added to Firebase Firestore",
                 Toast.LENGTH_LONG
             ).show()
+            onChangeIsLoading(false)
         }.addOnFailureListener { e ->
             // this method is called when the data addition process is failed.
             // displaying a toast message when data addition is failed.
             Toast.makeText(context, "Fail to add product", Toast.LENGTH_LONG).show()
+            onChangeIsLoading(false)
         }
     }
 
+    fun onChangeIsLoading(pLoading:Boolean){
+        _isLoading.value = pLoading
+    }
 }

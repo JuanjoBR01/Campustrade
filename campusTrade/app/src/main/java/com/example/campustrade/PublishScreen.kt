@@ -50,42 +50,50 @@ import java.util.UUID.*
 import java.text.SimpleDateFormat
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 
-
-class PublishScreen : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        val param1 = intent.getStringExtra("imgUris")
-        var uris: Uri? = null
-        if (param1 != null) {
-            uris = Uri.parse(param1)
-        }
-        setContent {
-            PublishScreenV(uris, PublishViewModel())
-        }
-    }
-}
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun PublishScreenV(uris: Uri?, viewModel: PublishViewModel) {
     //Atributo Scope
-    val scope:CoroutineScope by viewModel.scope.observeAsState(initial = rememberCoroutineScope())
+    val scope: CoroutineScope by viewModel.scope.observeAsState(initial = rememberCoroutineScope())
 
     //Atributo state
-    val state:ModalBottomSheetState by viewModel.state.observeAsState(initial = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden))
+    val state: ModalBottomSheetState by viewModel.state.observeAsState(
+        initial = rememberModalBottomSheetState(
+            initialValue = ModalBottomSheetValue.Hidden
+        )
+    )
 
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState())
-    ) {
-        TopBarPublishScreen()
-        TopView(uris, viewModel,scope,state)
-        MiddleView(viewModel)
-        bottomView(viewModel)
+    //Pantalla de cargando datos
+    val isLoading: Boolean by viewModel.isLoading.observeAsState(initial = false)
+
+    if (isLoading) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(Modifier.align(Alignment.Center))
+            Spacer(Modifier.height(16.dp))
+            Text(
+                text = "Uploading product to DataBase", style = TextStyle(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 28.sp
+                )
+            )
+        }
+    } else {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+        ) {
+            TopBarPublishScreen()
+            TopView(uris, viewModel, scope, state)
+            MiddleView(viewModel)
+            bottomView(viewModel)
+        }
+        selectableWindow(viewModel, scope, state)
     }
-    selectableWindow(viewModel,scope,state)
 }
 
 @Composable
@@ -293,7 +301,7 @@ fun MiddleView(
         OutlinedTextField(
             value = valueType,
             readOnly = true,
-            onValueChange = { viewModel.onChangeComboBox(it,expanded) },
+            onValueChange = { viewModel.onChangeComboBox(it, expanded) },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 4.dp)
@@ -303,7 +311,7 @@ fun MiddleView(
             label = { Text("Label") },
             trailingIcon = {
                 Icon(icon, "contentDescription",
-                    Modifier.clickable { viewModel.onChangeComboBox(valueType,!expanded) })
+                    Modifier.clickable { viewModel.onChangeComboBox(valueType, !expanded) })
             }
         )
         DropdownMenu(
@@ -371,7 +379,10 @@ fun bottomView(viewModel: PublishViewModel) {
         Button(
             onClick = {
                 try {
-                    Log.d(TAG,"PreProd----------------------------------------------------------------------------------------------")
+                    Log.d(
+                        TAG,
+                        "PreProd----------------------------------------------------------------------------------------------"
+                    )
                     val productOb = ProductObj(
                         image = " ",
                         name = viewModel.prodName.value!!,
@@ -384,26 +395,36 @@ fun bottomView(viewModel: PublishViewModel) {
                         stock = 1,
                         technicalSpecs = "TS"
                     )
-                    Log.d(TAG,"PostProd----------------------------------------------------------------------------------------------")
+                    Log.d(
+                        TAG,
+                        "PostProd----------------------------------------------------------------------------------------------"
+                    )
                     Toast.makeText(context, "Publishing...", Toast.LENGTH_LONG).show()
-                    Log.d(TAG,"PreUpload----------------------------------------------------------------------------------------------")
-                    Log.d(TAG,viewModel.contentImage.value.toString())
+                    Log.d(
+                        TAG,
+                        "PreUpload----------------------------------------------------------------------------------------------"
+                    )
+                    Log.d(TAG, viewModel.contentImage.value.toString())
+                    viewModel.onChangeIsLoading(true)
                     viewModel.uploadImageToDataBase(context, productOb)
                     //Clear output
                     viewModel.onPublishChanged("", "", "", "", "Used")
-                    viewModel.onChangeComboBox("",viewModel.expanded.value!!)
-                    Log.d(ContentValues.TAG,"Clear output")
+                    viewModel.onChangeComboBox("", viewModel.expanded.value!!)
+                    Log.d(ContentValues.TAG, "Clear output")
                 } catch (e: Exception) {
-                    Log.d(TAG,"----------------------------------------------------------------------------------------------")
-                    Log.d(TAG,e.toString())
-                    Log.d(TAG,e.message.toString())
+                    Log.d(
+                        TAG,
+                        "----------------------------------------------------------------------------------------------"
+                    )
+                    Log.d(TAG, e.toString())
+                    Log.d(TAG, e.message.toString())
                     Toast.makeText(
                         context,
                         "Error While Trying upload. Please Try Again",
                         Toast.LENGTH_LONG
                     ).show()
                     viewModel.onPublishChanged("", "", "", "", "Used")
-                    viewModel.onChangeComboBox("",viewModel.expanded.value!!)
+                    viewModel.onChangeComboBox("", viewModel.expanded.value!!)
                     viewModel.onChangeImage(null)
                 }
 
@@ -423,7 +444,6 @@ fun selectableWindow(
     scope: CoroutineScope,
     state: ModalBottomSheetState
 ) {
-
     //Context of the application
     val context = LocalContext.current
 
