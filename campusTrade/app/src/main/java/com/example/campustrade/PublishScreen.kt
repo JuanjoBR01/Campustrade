@@ -7,7 +7,6 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
-import android.os.Environment
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -55,25 +54,30 @@ import com.google.firebase.storage.ktx.storage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
-import java.io.File
 import java.util.*
 import java.util.UUID.*
 import java.text.SimpleDateFormat
 import androidx.compose.runtime.Composable
+import androidx.core.content.ContextCompat.startActivity
 
 
 class PublishScreen : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val param1 = intent.getStringExtra("imgUris")
+        var uris:Uri? = null
+        if(param1 != null){
+            uris = Uri.parse(param1)
+        }
         setContent{
-            PublishScreenV()
+            PublishScreenV(uris)
         }
     }
 }
 
 @Composable
-fun PublishScreenV() {
-    TopView()
+fun PublishScreenV(uris: Uri?) {
+    TopView(uris)
 }
 
 @Composable
@@ -100,7 +104,7 @@ fun TopBarPublishScreen(){
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun TopView() {
+fun TopView(uris: Uri?) {
     val context = LocalContext.current
 
     val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
@@ -111,6 +115,7 @@ fun TopView() {
     var contentImage = remember{
         mutableStateOf<Uri?>(null)
     }
+    contentImage.value = uris
     var tempImageFilePath = ""
     var tookPic = remember{
         mutableStateOf<Boolean>(false)
@@ -377,14 +382,9 @@ fun TopView() {
     BottomActionSheet(state = state, scope = scope,
         onTakeImage = {
             if (it) {
-                // Camera
-                tempImageUri = FileProvider.getUriForFile(
-                    context,
-                    "com.example.campustrade.provider",
-                    createImageFile(context).also {
-                        tempImageFilePath = it.absolutePath
-                    })
-                camera.launch(tempImageUri)
+               //Camera
+                val intent = Intent(context, LaunchCameraScreen::class.java)
+                context.startActivity(intent)
             } else {
                 // Gallery
                 pickMedia.launch("image/*")
@@ -399,10 +399,6 @@ fun TopView() {
 }
 
 
-private fun createImageFile(context:Context): File {
-    val storageDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
-    return File.createTempFile("temp_image",".jpg",storageDir)
-}
 
 
 fun uploadImageToDataBase(context: Context, contentImage: Uri?, productOb: ProductObj): String {
@@ -608,5 +604,5 @@ fun bitmapToByteArray(bitmap: Bitmap): ByteArray {
 @Preview(showBackground = true)
 @Composable
 fun PreviewPublishScreen(){
-    PublishScreenV()
+    PublishScreenV(null)
 }
