@@ -1,5 +1,6 @@
 package com.example.campustrade
 import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
@@ -23,28 +24,41 @@ import android.os.Bundle
 import android.util.Log
 import android.util.Patterns
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.VisualTransformation
 import com.example.campustrade.ui.theme.CampustradeTheme
 import com.example.campustrade.ui.theme.darkBlue
 import com.example.campustrade.ui.theme.orange
 import com.example.campustrade.ui.theme.white
+import java.text.SimpleDateFormat
+import android.content.ContentValues.TAG
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.os.Environment
+import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.layout.ContentScale
+import androidx.core.content.FileProvider
+import coil.compose.rememberAsyncImagePainter
+import com.google.firebase.firestore.CollectionReference
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.ktx.storage
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.util.*
+import java.util.UUID.*
 
 
 class SignUpScreen : ComponentActivity() {
-
-    private val requestPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            Log.i("camera", "Permission granted")
-        } else {
-            Log.i("camera", "Permission denied")
-        }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,6 +71,7 @@ class SignUpScreen : ComponentActivity() {
 
 }
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun SignUpScreenComposable(modifier: Modifier = Modifier, viewModel: SignUpViewModel) {
     //var mTextFieldSize by remember { mutableStateOf(Size.Zero)}
@@ -69,8 +84,33 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier, viewModel: SignUpViewM
     val secretField: String by viewModel.password.observeAsState(initial = "")
     val confirmSecretField: String by viewModel.confirmPassword.observeAsState(initial = "")
 
-
     val context = LocalContext.current
+
+    val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+    val currentDate = Date()
+    val publishDat = dateFormat.format(currentDate)
+
+
+    var contentImage = remember{
+        mutableStateOf<Uri?>(null)
+    }
+    var tempImageFilePath = ""
+    var tookPic = remember{
+        mutableStateOf<Boolean>(false)
+    }
+    val pickMedia = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()){
+            uri: Uri? -> contentImage.value = uri
+    }
+    var tempImageUri: Uri? = null
+    val camera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()){ success->
+        tookPic.value = success
+        if(success){
+            contentImage.value = tempImageUri
+        }
+    }
+
+    val state = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
+    val scope = rememberCoroutineScope()
 
 
     Column (
@@ -102,20 +142,16 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier, viewModel: SignUpViewM
 
         Spacer(modifier = Modifier.height(25.dp))
 
-        Button(onClick = {val intent = Intent(context, LaunchCameraProfileActivity::class.java)
-            context.startActivity(intent)
-        },
+        Box(
             modifier = Modifier
-                .width(80.dp)
-                .height(80.dp),
-            colors = ButtonDefaults.buttonColors(
-                backgroundColor = orange)
+                .background(Color(0xFFFB8500))
+                .height(120.dp)
+                .width(120.dp)
+                .clip(RoundedCornerShape(20.dp))
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.baseline_add_a_photo_black_48),
-                contentDescription = stringResource(id = R.string.add_a_photo_button)
-            )
+            PhotoView2(imagePath = contentImage.value, scope = scope, state = state)
         }
+
 
         Spacer(modifier = Modifier.height(10.dp))
 
@@ -213,6 +249,8 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier, viewModel: SignUpViewM
 
         Spacer(modifier = Modifier.height(20.dp))
 
+
+
         Button(
             onClick = {
                 var aux: Boolean
@@ -226,7 +264,9 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier, viewModel: SignUpViewM
                 } else if (nameField.isEmpty()) {
                     mes = "Enter a valid name"
                 } else {
-                    aux = viewModel.createUser(valueType, nameField, emailField, secretField)
+
+                    aux = uploadImageToDB(context, contentImage.value, viewModel,
+                        valueType, nameField, emailField, secretField)
                     mes = if (aux) {
                         "User created in Auth system and FireStore DB"
                     } else {
@@ -259,6 +299,29 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier, viewModel: SignUpViewM
                 color = MaterialTheme.colors.background)
         }
 
+        BottomActionSheet2(state = state, scope = scope,
+            onTakeImage = {
+                if (it) {
+                    // Camera
+                    tempImageUri = FileProvider.getUriForFile(
+                        context,
+                        "com.example.campustrade.provider",
+                        createImageFile2(context).also {
+                            tempImageFilePath = it.absolutePath
+                        })
+                    camera.launch(tempImageUri)
+                } else {
+                    // Gallery
+                    pickMedia.launch("image/*")
+                }
+
+            }
+        )
+        {
+
+        }
+
+
     }
 
 }
@@ -279,6 +342,121 @@ fun TextBoxField(value: String, onValueChange: (String) -> Unit, label: String, 
     )
 
 }
+
+
+
+
+fun createImageFile2(context:Context): File {
+    val storageDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+    return File.createTempFile("temp_image",".jpg",storageDir)
+}
+
+
+fun uploadImageToDB(context: Context, contentImage: Uri?, viewModel: SignUpViewModel, vt: String, nn: String, em: String, pw: String): Boolean {
+    // create the storage reference
+    var aux = true
+    aux = viewModel.uploadImage(context, contentImage, viewModel, vt, nn, em, pw)
+
+    return aux
+
+
+}
+
+
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+fun PhotoView2(modifier: Modifier = Modifier, imagePath:Uri?, scope: CoroutineScope, state: ModalBottomSheetState){
+    Image(
+        painter = if(imagePath == null){
+            painterResource(id = R.drawable.baseline_add_a_photo_black_48)
+        }
+        else{
+            rememberAsyncImagePainter(
+                model = imagePath,//ImageRequest.Builder(context = LocalContext.current)
+                //.crossfade(true).data(imagePath).build(),
+                filterQuality = FilterQuality.High
+            )
+        },
+        contentDescription = null,
+        modifier = modifier
+            .height(148.dp)
+            .width(148.dp)
+            .clickable {
+                scope.launch {
+                    state.show()
+                }
+            }
+            .background(color = Color.Transparent),
+        contentScale = if(imagePath == null){
+            ContentScale.Inside
+        }
+        else{
+            ContentScale.FillWidth
+        }
+    )
+
+}
+
+
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+fun BottomActionSheet2(state:ModalBottomSheetState, scope: CoroutineScope,onTakeImage:(isCamera:Boolean)-> Unit, modalBottomSheetLayoutScope: @Composable ()->Unit ){
+    ModalBottomSheetLayout(
+        sheetState = state,
+        sheetContent = {
+            Column(modifier = Modifier.fillMaxHeight()){
+                BottomActionItem2(title = "Camera", resource = R.drawable.baseline_photo_camera_24, isCamera = true){
+                        isCamera ->
+                    scope.launch {
+                        state.hide()
+                    }
+                    onTakeImage(isCamera)
+                }
+
+                BottomActionItem2(title = "Gallery", resource = R.drawable.gallery, isCamera = false){
+                        isCamera ->
+                    scope.launch {
+                        state.hide()
+                    }
+                    onTakeImage(isCamera)
+                }
+
+            }
+        }) {
+        modalBottomSheetLayoutScope()
+    }
+
+}
+
+
+@Composable
+private fun BottomActionItem2(modifier: Modifier = Modifier, title:String, resource:Int, isCamera:Boolean,onTakeImage:(isCamera:Boolean)-> Unit){
+    Row(modifier = modifier
+        .fillMaxWidth()
+        .height(50.dp)
+        .clickable {
+            onTakeImage(isCamera)
+        }){
+        Image(painter = painterResource(id = resource),
+            contentDescription = null,
+            modifier = modifier
+                .size(40.dp)
+                .align(Alignment.CenterVertically),
+            contentScale = ContentScale.Inside
+        )
+
+        Spacer(modifier = modifier.width(10.dp))
+
+        Text(text = title, modifier = modifier.align(Alignment.CenterVertically))
+    }
+
+}
+
+
+
+
 @Preview
 @Composable
 fun SignUpScreenPreview() {
