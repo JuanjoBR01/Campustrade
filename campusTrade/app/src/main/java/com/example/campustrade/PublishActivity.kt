@@ -260,11 +260,11 @@ fun MyBodyPublish(context: Context){
             // on below line creating an instance of firebase firestore.
             val db: FirebaseFirestore = FirebaseFirestore.getInstance()
             //creating a collection reference for our Firebase Firestore database.
-            val dbCourses: CollectionReference = db.collection("ProductsDB")
+            //val dbCourses: CollectionReference = db.collection("ProductsDB")
             //adding our data to our courses object class.
-            val productOb = ProductObj("",valueProduct,valuePrice.toInt(),valueDescription,selectedItem,valueType,valueTags)
+           // val productOb = ProductObj("",valueProduct,valuePrice.toInt(),valueDescription,selectedItem,valueType,valueTags)
             //below method is use to add data to Firebase Firestore.
-            dbCourses.add(productOb).addOnSuccessListener {
+           // dbCourses.add(productOb).addOnSuccessListener {
                 // after the data addition is successful
                 // we are displaying a success toast message.
                 Toast.makeText(
@@ -272,11 +272,11 @@ fun MyBodyPublish(context: Context){
                     "Your Course has been added to Firebase Firestore",
                     Toast.LENGTH_SHORT
                 ).show()
-            }.addOnFailureListener { e ->
+            //}.addOnFailureListener { e ->
                 // this method is called when the data addition process is failed.
                 // displaying a toast message when data addition is failed.
                 Toast.makeText(context, "Fail to add course", Toast.LENGTH_SHORT).show()
-            }
+           // }
         },
             colors = ButtonDefaults.buttonColors(backgroundColor =  Color(0xFFFB8500))) {
             Text(text = "Publish")

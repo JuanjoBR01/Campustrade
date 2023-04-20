@@ -58,7 +58,9 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 import java.util.*
 import java.util.UUID.*
-import androidx.compose.material.AlertDialog
+import java.text.SimpleDateFormat
+import androidx.compose.runtime.Composable
+
 
 class PublishScreen : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -100,6 +102,12 @@ fun TopBarPublishScreen(){
 @Composable
 fun TopView() {
     val context = LocalContext.current
+
+    val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+    val currentDate = Date()
+    val publishDat = dateFormat.format(currentDate)
+
+
     var contentImage = remember{
         mutableStateOf<Uri?>(null)
     }
@@ -160,9 +168,10 @@ fun TopView() {
     var isRunning by remember {mutableStateOf(false)}
 
 
-    Column(Modifier
-        .fillMaxWidth()
-        .verticalScroll(rememberScrollState())) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState())) {
         TopBarPublishScreen()
         Row(modifier = Modifier.padding(16.dp)) {
             Box(
@@ -201,12 +210,15 @@ fun TopView() {
         }
 
         Row(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
                 .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp)
         ) {
 
             OutlinedTextField(
-                modifier = Modifier.fillMaxWidth().height(90.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(90.dp),
                 value = prodDescr,
                 label = { Text(text = "Description") },
                 onValueChange = { newDescrp: String ->
@@ -223,7 +235,6 @@ fun TopView() {
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
             fontSize = 15.sp
         )
-
 
         Row(
             modifier = Modifier
@@ -260,6 +271,7 @@ fun TopView() {
             Text(text = "Type of product", fontSize = 15.sp)
             OutlinedTextField(
                 value = valueType,
+                readOnly = true,
                 onValueChange = { valueType = it },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -275,8 +287,6 @@ fun TopView() {
                         Modifier.clickable { expanded = !expanded })
                 }
             )
-            // Create a drop-down menu with list of cities,
-            // when clicked, set the Text Field text as the city selected
             DropdownMenu(
                 expanded = expanded,
                 onDismissRequest = { expanded = false },
@@ -295,12 +305,15 @@ fun TopView() {
         }
 
         Row(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
                 .padding(start = 16.dp, end = 16.dp, top = 0.dp, bottom = 8.dp)
         ) {
 
             OutlinedTextField(
-                modifier = Modifier.fillMaxWidth().height(90.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(90.dp),
                 value = prodTags,
                 label = { Text(text = "Tags") },
                 onValueChange = { newTags: String ->
@@ -321,13 +334,16 @@ fun TopView() {
                 onClick = {
                     try{
                         val productOb = ProductObj(
-                            "",
-                            prodName,
-                            prodPrice.toInt(),
-                            prodDescr,
-                            selectedItem,
-                            valueType,
-                            prodTags
+                            image = "",
+                            name = prodName,
+                            price = prodPrice.toInt(),
+                            description = prodDescr,
+                            condition = selectedItem,
+                            type = valueType,
+                            tags = prodTags,
+                            publishDate = publishDat,
+                            stock = 1,
+                            technicalSpecs = "TS"
                         )
                         Toast.makeText(context, "Publishing...", Toast.LENGTH_LONG).show()
                         val imgUrl = uploadImageToDataBase(context,contentImage.value,productOb)
@@ -355,7 +371,6 @@ fun TopView() {
             ) {
                 Text(text = "Publish")
             }
-
         }
     }
 
@@ -547,8 +562,8 @@ private fun RadioButtonStyle(selectedItem: String, details:String) {
     val screenWidth = configuration.screenWidthDp.dp
     Box(
         modifier = Modifier
-            .padding( top = 4.dp, start = 8.dp, bottom = 4.dp, end = 8.dp)
-            .width((screenWidth/2)-16.dp)
+            .padding(top = 4.dp, start = 8.dp, bottom = 4.dp, end = 8.dp)
+            .width((screenWidth / 2) - 16.dp)
             // .fillMaxWidth()
             .background(
                 color =
