@@ -263,6 +263,8 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier, viewModel: SignUpViewM
                     mes = "Enter a valid email"
                 } else if (nameField.isEmpty()) {
                     mes = "Enter a valid name"
+                } else if (contentImage.value == null){
+                    mes = "Please take a photo"
                 } else {
 
                     aux = uploadImageToDB(context, contentImage.value, viewModel,
