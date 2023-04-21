@@ -1,5 +1,6 @@
 package com.example.campustrade
 import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
@@ -16,82 +17,100 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.runtime.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.*
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.activity.ComponentActivity
 import android.os.Bundle
 import android.util.Log
+import android.util.Patterns
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.VisualTransformation
 import com.example.campustrade.ui.theme.CampustradeTheme
 import com.example.campustrade.ui.theme.darkBlue
 import com.example.campustrade.ui.theme.orange
 import com.example.campustrade.ui.theme.white
-import com.google.firebase.auth.FirebaseAuth
+import java.text.SimpleDateFormat
+import android.content.ContentValues.TAG
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.os.Environment
+import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.layout.ContentScale
+import androidx.core.content.FileProvider
+import coil.compose.rememberAsyncImagePainter
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.ktx.storage
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.util.*
+import java.util.UUID.*
 
 
 class SignUpScreen : ComponentActivity() {
-
-    private val requestPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            Log.i("camera", "Permission granted")
-        } else {
-            Log.i("camera", "Permission denied")
-        }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             CampustradeTheme {
-                SignUpScreenComposable()
+                SignUpScreenComposable(viewModel = SignUpViewModel(SignUpRepository()))
             }
         }
     }
 
 }
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun SignUpScreenComposable(modifier: Modifier = Modifier) {
-
-    var expanded by remember {
-        mutableStateOf(false)
-    }
-
-    var mTextFieldSize by remember { mutableStateOf(Size.Zero)}
-
+fun SignUpScreenComposable(modifier: Modifier = Modifier, viewModel: SignUpViewModel) {
+    //var mTextFieldSize by remember { mutableStateOf(Size.Zero)}
     val prodType = arrayOf("Material", "Product", "Accessory", "Other")
 
-    var valueType by remember {
-        mutableStateOf(prodType[0])
-    }
-
-    var nameField by remember {
-        mutableStateOf("")
-    }
-
-    var emailField by remember {
-        mutableStateOf("")
-    }
-
-    var secretField by remember {
-        mutableStateOf("")
-    }
-
-    var confirmSecretField by remember {
-        mutableStateOf("")
-    }
+    val expanded: Boolean by viewModel.expanded.observeAsState(initial = false)
+    val valueType: String by viewModel.valueType.observeAsState(initial = prodType[0])
+    val nameField: String by viewModel.name.observeAsState(initial = "")
+    val emailField: String by viewModel.email.observeAsState(initial = "")
+    val secretField: String by viewModel.password.observeAsState(initial = "")
+    val confirmSecretField: String by viewModel.confirmPassword.observeAsState(initial = "")
 
     val context = LocalContext.current
+
+    val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+    val currentDate = Date()
+    val publishDat = dateFormat.format(currentDate)
+
+
+    var contentImage = remember{
+        mutableStateOf<Uri?>(null)
+    }
+    var tempImageFilePath = ""
+    var tookPic = remember{
+        mutableStateOf<Boolean>(false)
+    }
+    val pickMedia = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()){
+            uri: Uri? -> contentImage.value = uri
+    }
+    var tempImageUri: Uri? = null
+    val camera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()){ success->
+        tookPic.value = success
+        if(success){
+            contentImage.value = tempImageUri
+        }
+    }
+
+    val state = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
+    val scope = rememberCoroutineScope()
 
 
     Column (
@@ -123,26 +142,26 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier) {
 
         Spacer(modifier = Modifier.height(25.dp))
 
-        Button(onClick = {val intent = Intent(context, LaunchCameraProfileActivity::class.java)
-            context.startActivity(intent)
-        },
+        Box(
             modifier = Modifier
-                .width(80.dp)
-                .height(80.dp),
-            colors = ButtonDefaults.buttonColors(
-                backgroundColor = orange)
+                .background(Color(0xFFFB8500))
+                .height(120.dp)
+                .width(120.dp)
+                .clip(RoundedCornerShape(20.dp))
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.baseline_add_a_photo_black_48),
-                contentDescription = stringResource(id = R.string.add_a_photo_button)
-            )
+            PhotoView2(imagePath = contentImage.value, scope = scope, state = state)
         }
+
 
         Spacer(modifier = Modifier.height(10.dp))
 
         TextBoxField(
             nameField,
-            {newValue -> nameField = newValue},
+            {
+                    if(it.length < 51) {
+                        viewModel.onNameChange(it)
+                    }
+            },
             stringResource(id = R.string.name_sign_up_form),
             VisualTransformation.None)
 
@@ -150,7 +169,10 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier) {
 
         TextBoxField(
             emailField,
-            {newValue -> emailField = newValue},
+            {newValue ->
+                if (newValue.length <41){
+                    viewModel.onEmailChange(newValue)
+                }},
             label = stringResource(id = R.string.email_sign_up_form),
             VisualTransformation.None
         )
@@ -161,25 +183,28 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier) {
             .padding(start = 32.dp, end = 32.dp, bottom = 10.dp)){
             OutlinedTextField(
                 value = valueType,
-                onValueChange = { valueType = it },
+                onValueChange = {
+                    if (it.length < 41){
+                        viewModel.onValueTypeChange(it)
+                    }
+                                },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .onGloballyPositioned { coordinates ->
+                    .onGloballyPositioned { //coordinates ->
                         // This value is used to assign to
                         // the DropDown the same width
-                        mTextFieldSize = coordinates.size.toSize()
+                        // mTextFieldSize = coordinates.size.toSize()
                     },
                 label = {Text("Label")},
                 trailingIcon = {
                     Icon(painter = painterResource(id = R.drawable.baseline_expand_more_black_48),"contentDescription",
-                        Modifier.clickable { expanded = !expanded })
+                        Modifier.clickable { viewModel.onExpandedChange() })
                 }
             )
 
-
             DropdownMenu(
                 expanded = expanded,
-                onDismissRequest = { expanded = false },
+                onDismissRequest = { viewModel.setExpandedFalse() },
                 modifier = Modifier
                     .width(100.dp)
                     .background(Color.White)
@@ -187,8 +212,8 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier) {
             ) {
                 prodType.forEach { label ->
                     DropdownMenuItem(onClick = {
-                        valueType = label
-                        expanded = false
+                        viewModel.onValueTypeChange(label)
+                        viewModel.setExpandedFalse()
                     }) {
                         Text(text = label,
                             modifier
@@ -205,74 +230,59 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier) {
 
         TextBoxField(
             secretField,
-            {newValue -> secretField = newValue},
+            {newValue ->
+                if (newValue.length < 51) {
+                    viewModel.onPasswordChange(newValue)
+                }},
             label = stringResource(id = R.string.password_sign_up_form),
             PasswordVisualTransformation())
 
         Spacer(modifier = Modifier.height(10.dp))
 
         TextBoxField(confirmSecretField,
-            {newValue -> confirmSecretField = newValue},
+            {newValue ->
+                if (newValue.length < 51) {
+                    viewModel.onConfirmPasswordChange(newValue)
+                }},
             label = stringResource(id = R.string.confirm_password_sign_up_form),
             PasswordVisualTransformation())
 
         Spacer(modifier = Modifier.height(20.dp))
 
+
+
         Button(
             onClick = {
-                if ( secretField == confirmSecretField && emailField != "" && secretField != "") {
-                    FirebaseAuth
-                        .getInstance()
-                        .createUserWithEmailAndPassword(emailField, secretField)
-                        .addOnCompleteListener(){
-                            if (it.isSuccessful) {
-                                Toast.makeText(
-                                    context,
-                                    "Data sent to Firebase",
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                var aux: Boolean
+                var mes: String
+                if (secretField.length < 6 || confirmSecretField.length < 6) {
+                    mes = "The password needs at least 6 characters"
+                } else if (secretField != confirmSecretField) {
+                    mes = "The password fields do not match"
+                } else if (!Patterns.EMAIL_ADDRESS.matcher(emailField).matches()) {
+                    mes = "Enter a valid email"
+                } else if (nameField.isEmpty()) {
+                    mes = "Enter a valid name"
+                } else {
 
-                                // on below line creating an instance of firebase firesStore.
-                                val db: FirebaseFirestore = FirebaseFirestore.getInstance()
-                                //creating a collection reference for our Firebase FireStore database.
-                                val dbUsers: CollectionReference = db.collection("users")
-                                //adding our data to our courses object class.
-                                val userObj = UserObj(nameField, emailField,secretField,"https://firebasestorage.googleapis.com/v0/b/campustrade-6d7b6.appspot.com/o/images%2Fowl.jpg?alt=media&token=d9dd4852-dcad-4811-9739-36909d731a6d")
-                                //below method is use to add data to Firebase FireStore.
-                                dbUsers.add(userObj).addOnSuccessListener {
-                                    // after the data addition is successful
-                                    // we are displaying a success toast message.
-                                    Toast.makeText(
-                                        context,
-                                        "User Created in FireStore Database",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                }.addOnFailureListener { e ->
-                                    // this method is called when the data addition process is failed.
-                                    // displaying a toast message when data addition is failed.
-                                    Toast.makeText(context, "Fail to add course", Toast.LENGTH_SHORT).show()
-                                }
+                    aux = uploadImageToDB(context, contentImage.value, viewModel,
+                        valueType, nameField, emailField, secretField)
+                    mes = if (aux) {
+                        "User created in Auth system and FireStore DB"
+                    } else {
+                        "Failed to create user in the DB"
+                    }
 
+                    viewModel.restartForm()
+                }
 
+                Toast.makeText(
+                    context,
+                    mes,
+                    Toast.LENGTH_LONG
+                ).show()
 
-
-
-                            } else {
-                                Toast.makeText(
-                                    context,
-                                    "It was a problem sending the data to Firebase",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                        }
-                } else{
-                    Toast.makeText(
-                        context,
-                        "The password fields do not match",
-                        Toast.LENGTH_SHORT
-                    ).show()
-
-                }},
+                },
             colors = ButtonDefaults.buttonColors(
                 backgroundColor = orange
             ),
@@ -290,6 +300,29 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier) {
                 style = MaterialTheme.typography.body1,
                 color = MaterialTheme.colors.background)
         }
+
+        BottomActionSheet2(state = state, scope = scope,
+            onTakeImage = {
+                if (it) {
+                    // Camera
+                    tempImageUri = FileProvider.getUriForFile(
+                        context,
+                        "com.example.campustrade.provider",
+                        createImageFile2(context).also {
+                            tempImageFilePath = it.absolutePath
+                        })
+                    camera.launch(tempImageUri)
+                } else {
+                    // Gallery
+                    pickMedia.launch("image/*")
+                }
+
+            }
+        )
+        {
+
+        }
+
 
     }
 
@@ -311,10 +344,125 @@ fun TextBoxField(value: String, onValueChange: (String) -> Unit, label: String, 
     )
 
 }
+
+
+
+
+fun createImageFile2(context:Context): File {
+    val storageDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+    return File.createTempFile("temp_image",".jpg",storageDir)
+}
+
+
+fun uploadImageToDB(context: Context, contentImage: Uri?, viewModel: SignUpViewModel, vt: String, nn: String, em: String, pw: String): Boolean {
+    // create the storage reference
+    var aux = true
+    aux = viewModel.uploadImage(context, contentImage, viewModel, vt, nn, em, pw)
+
+    return aux
+
+
+}
+
+
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+fun PhotoView2(modifier: Modifier = Modifier, imagePath:Uri?, scope: CoroutineScope, state: ModalBottomSheetState){
+    Image(
+        painter = if(imagePath == null){
+            painterResource(id = R.drawable.baseline_add_a_photo_black_48)
+        }
+        else{
+            rememberAsyncImagePainter(
+                model = imagePath,//ImageRequest.Builder(context = LocalContext.current)
+                //.crossfade(true).data(imagePath).build(),
+                filterQuality = FilterQuality.High
+            )
+        },
+        contentDescription = null,
+        modifier = modifier
+            .height(148.dp)
+            .width(148.dp)
+            .clickable {
+                scope.launch {
+                    state.show()
+                }
+            }
+            .background(color = Color.Transparent),
+        contentScale = if(imagePath == null){
+            ContentScale.Inside
+        }
+        else{
+            ContentScale.FillWidth
+        }
+    )
+
+}
+
+
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+fun BottomActionSheet2(state:ModalBottomSheetState, scope: CoroutineScope,onTakeImage:(isCamera:Boolean)-> Unit, modalBottomSheetLayoutScope: @Composable ()->Unit ){
+    ModalBottomSheetLayout(
+        sheetState = state,
+        sheetContent = {
+            Column(modifier = Modifier.fillMaxHeight()){
+                BottomActionItem2(title = "Camera", resource = R.drawable.baseline_photo_camera_24, isCamera = true){
+                        isCamera ->
+                    scope.launch {
+                        state.hide()
+                    }
+                    onTakeImage(isCamera)
+                }
+
+                BottomActionItem2(title = "Gallery", resource = R.drawable.gallery, isCamera = false){
+                        isCamera ->
+                    scope.launch {
+                        state.hide()
+                    }
+                    onTakeImage(isCamera)
+                }
+
+            }
+        }) {
+        modalBottomSheetLayoutScope()
+    }
+
+}
+
+
+@Composable
+private fun BottomActionItem2(modifier: Modifier = Modifier, title:String, resource:Int, isCamera:Boolean,onTakeImage:(isCamera:Boolean)-> Unit){
+    Row(modifier = modifier
+        .fillMaxWidth()
+        .height(50.dp)
+        .clickable {
+            onTakeImage(isCamera)
+        }){
+        Image(painter = painterResource(id = resource),
+            contentDescription = null,
+            modifier = modifier
+                .size(40.dp)
+                .align(Alignment.CenterVertically),
+            contentScale = ContentScale.Inside
+        )
+
+        Spacer(modifier = modifier.width(10.dp))
+
+        Text(text = title, modifier = modifier.align(Alignment.CenterVertically))
+    }
+
+}
+
+
+
+
 @Preview
 @Composable
 fun SignUpScreenPreview() {
     CampustradeTheme {
-        SignUpScreenComposable()
+        SignUpScreenComposable(viewModel = SignUpViewModel(SignUpRepository()))
     }
 }
