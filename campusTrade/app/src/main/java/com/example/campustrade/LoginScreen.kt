@@ -129,7 +129,7 @@ fun LoginScreenComposable(modifier: Modifier = Modifier, viewModel: LoginViewMod
                         "Login successful",
                         Toast.LENGTH_LONG
                     ).show()
-                    val intent = Intent(context, HomeActivity::class.java)
+                    val intent = Intent(context, HomeActivityMVVM::class.java)
                     context.startActivity(intent)
                 } else {
                     Toast.makeText(
