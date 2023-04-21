@@ -4,12 +4,9 @@ import android.content.ContentValues
 import android.content.ContentValues.TAG
 import android.content.Intent
 import android.net.Uri
-import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
@@ -52,6 +49,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -137,7 +135,7 @@ fun TopView(
     val prodPrice: String by viewModel.prodPrice.observeAsState(initial = " ")
 
     //Atributo de la imagen a mostrar
-    val contentImage: Uri? by viewModel.contentImage.observeAsState(initial = uris)
+    val contentImage: Uri? by viewModel.contentImage.observeAsState()
 
     viewModel.onChangeImage(uris)
 
@@ -150,7 +148,7 @@ fun TopView(
                 .clip(RoundedCornerShape(16.dp))
                 .border(1.dp, Color.Black, RoundedCornerShape(16.dp))
         ) {
-            PhotoView(imagePath = contentImage, scope = scope, state = state)
+            PhotoView(imagePath = contentImage, scope = scope, state = state, viewModel = viewModel)
         }
         Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp)) {
             OutlinedTextField(
@@ -451,6 +449,12 @@ fun selectableWindow(
     val pickMedia =
         rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
             viewModel.onChangeImage(uri)
+            Log.d(TAG,viewModel.contentImage.value.toString())
+            val param1 = viewModel.contentImage.value
+            val intent = Intent(context, PublishScreen::class.java).apply {
+                putExtra("imgUris", param1.toString())
+            }
+            context.startActivity(intent)
         }
 
     BottomActionSheet(state = state, scope = scope,
@@ -477,14 +481,15 @@ private fun PhotoView(
     modifier: Modifier = Modifier,
     imagePath: Uri?,
     scope: CoroutineScope,
-    state: ModalBottomSheetState
+    state: ModalBottomSheetState,
+    viewModel: PublishViewModel
 ) {
     Image(
-        painter = if (imagePath == null) {
+        painter = if (viewModel.contentImage.value == null) {
             painterResource(id = R.drawable.camera)
         } else {
             rememberAsyncImagePainter(
-                model = imagePath,//ImageRequest.Builder(context = LocalContext.current)
+                model = viewModel.contentImage.value,//ImageRequest.Builder(context = LocalContext.current)
                 //.crossfade(true).data(imagePath).build(),
                 filterQuality = FilterQuality.High
             )
