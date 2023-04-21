@@ -26,7 +26,7 @@ class HistoryActivity : ComponentActivity() {
                     Column()
                     {
                         MyTopBarTransaction2()
-                        MyBodyTransaction2(HistoryViewModel())
+                        MyBodyTransaction2(HistoryViewModel(HistoryRepository()))
                         MyBottomBar2(HomeViewModel(HomeRepository()))
                     }
                 }
@@ -43,7 +43,7 @@ fun DefaultPreview4() {
         Column()
         {
             MyTopBarTransaction2()
-            MyBodyTransaction2(HistoryViewModel())
+            MyBodyTransaction2(HistoryViewModel(HistoryRepository()))
             MyBottomBar2(HomeViewModel(HomeRepository()))
         }
     }

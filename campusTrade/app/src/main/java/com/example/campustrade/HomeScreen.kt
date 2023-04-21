@@ -51,6 +51,11 @@ fun MyBodyHome2(homeViewModel: HomeViewModel){
     val maxChar = 25
     val value :String by homeViewModel.value.observeAsState(initial = "")
 
+    //val preference :String by homeViewModel.value.observeAsState(initial = "Accesory")
+
+    var preference by remember { mutableStateOf("Accesory") }
+    var expanded by remember { mutableStateOf(false) }
+
     if (isPressed)
         MyBodyHome2(homeViewModel)
 
@@ -78,9 +83,51 @@ fun MyBodyHome2(homeViewModel: HomeViewModel){
         },
         backgroundColor = Color(0xFF8ECAE6),
         navigationIcon = {
-            IconButton(onClick = {},
+            IconButton(onClick = {expanded = !expanded},
                 interactionSource = interactionSource) {
                 Icon(imageVector = Icons.Filled.Search, contentDescription = "Navigation icon", modifier = Modifier.size(90.dp))
+            }
+            if (expanded) {
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false },
+                    modifier = Modifier.background(Color(0xFFB4E7FF))
+                ) {
+                    DropdownMenuItem(onClick = {
+                        // acción para el primer elemento de menú
+                        //homeViewModel.onPreferenceChange("Type")
+                        preference = "Accesory"
+                        homeViewModel.arrangeProductListFirestore(value, preference)
+                        expanded = false
+                    },
+                    modifier = Modifier.background(Color(0xFFB4E7FF)))
+                    {
+                        Text(text = "Type")
+                    }
+                    DropdownMenuItem(onClick = {
+                        // acción para el segundo elemento de menú
+                        //homeViewModel.onPreferenceChange("Used")
+                        preference = "Used"
+                        homeViewModel.arrangeProductListFirestore(value, preference)
+                        expanded = false
+                    },
+                    modifier = Modifier.background(Color(0xFFB4E7FF)))
+                    {
+                        Text(text = "Condition - Used")
+                    }
+                    DropdownMenuItem(onClick = {
+                        // acción para el segundo elemento de menú
+                        //homeViewModel.onPreferenceChange("New")
+                        preference = "New"
+                        homeViewModel.arrangeProductListFirestore(value, preference)
+                        expanded = false
+                    },
+                        modifier = Modifier.background(Color(0xFFB4E7FF)))
+                    {
+                        Text(text = "Condition - New")
+                    }
+                    // Agregar más elementos de menú si es necesario
+                }
             }
         }
     )
@@ -92,7 +139,7 @@ fun MyBodyHome2(homeViewModel: HomeViewModel){
 
     val data :List<ProductDB> by homeViewModel.productList.observeAsState(emptyList())
 
-    homeViewModel.arrangeProductListFirestore(value)
+    homeViewModel.arrangeProductListFirestore(value, preference)
 
     if(data.size == 0){
         Box(
@@ -176,7 +223,7 @@ fun ProductList2(producto: ProductDB, homeViewModel: HomeViewModel) {
                 .padding(bottom = 16.dp)
         ) {
             Text(
-                text = producto.type,
+                text = producto.type + " - " + producto.condition,
                 style = MaterialTheme.typography.h6,
                 fontSize = 17.sp,
                 color = Color(0xFF939393)
