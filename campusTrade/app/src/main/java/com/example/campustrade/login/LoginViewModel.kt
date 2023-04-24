@@ -1,4 +1,4 @@
-package com.example.campustrade
+package com.example.campustrade.login
 
 import android.util.Patterns
 import androidx.lifecycle.LiveData

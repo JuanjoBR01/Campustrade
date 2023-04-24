@@ -68,13 +68,13 @@
             android:label="@string/title_activity_home"
             android:theme="@style/Theme.Campustrade" />
         <activity
-            android:name=".SignUpScreen"
+            android:name=".signup.SignUpScreen"
             android:screenOrientation="portrait"
             android:exported="false"
             android:label="@string/title_activity_sign_up"
             android:theme="@style/Theme.Campustrade" />
         <activity
-            android:name=".LoginScreen"
+            android:name=".login.LoginScreen"
             android:screenOrientation="portrait"
             android:exported="false"
             android:label="@string/title_activity_log_in"
