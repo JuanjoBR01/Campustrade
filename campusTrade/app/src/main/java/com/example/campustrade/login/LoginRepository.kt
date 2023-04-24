@@ -1,13 +1,8 @@
-package com.example.campustrade
+package com.example.campustrade.login
 
 
 import android.util.Log
 import com.example.campustrade.FirebaseClient
-import com.example.campustrade.SignUpRepositoryInterface
-import com.example.campustrade.UserObj
-
-
-import com.google.firebase.firestore.CollectionReference
 
 class LoginRepository: LoginRepositoryInterface {
 

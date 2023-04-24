@@ -1,5 +1,7 @@
-package com.example.campustrade
+package com.example.campustrade.signup
 
+import com.example.campustrade.FirebaseClient
+import com.example.campustrade.UserObj
 import com.google.firebase.firestore.CollectionReference
 
 class SignUpRepository: SignUpRepositoryInterface {

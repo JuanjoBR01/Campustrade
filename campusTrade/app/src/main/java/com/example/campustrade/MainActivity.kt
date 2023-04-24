@@ -3,13 +3,12 @@ package com.example.campustrade
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.campustrade.login.LoginRepository
+import com.example.campustrade.login.LoginScreenComposable
+import com.example.campustrade.login.LoginViewModel
 import com.example.campustrade.ui.theme.CampustradeTheme
 
 class MainActivity : ComponentActivity() {
