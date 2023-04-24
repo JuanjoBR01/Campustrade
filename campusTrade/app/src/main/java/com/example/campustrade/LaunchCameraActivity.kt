@@ -198,8 +198,11 @@ fun CameraBelow(){
             Text(text = "Start Scanning")
         }
     }
-
 }
+
+
+
+
 
 @Preview(showBackground = true)
 @Composable

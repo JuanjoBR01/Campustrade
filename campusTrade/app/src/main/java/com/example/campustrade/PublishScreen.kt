@@ -1,20 +1,13 @@
 package com.example.campustrade
 
+import android.content.ContentValues
 import android.content.ContentValues.TAG
-import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.net.Uri
-import android.os.Bundle
-import android.os.Environment
 import android.util.Log
 import android.widget.Toast
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.result.contract.ActivityResultContracts.TakePicture
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -46,44 +39,69 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.toSize
-import androidx.core.content.FileProvider
 import coil.compose.rememberAsyncImagePainter
-import com.google.firebase.firestore.CollectionReference
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.ktx.Firebase
-import com.google.firebase.storage.ktx.storage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import java.io.ByteArrayOutputStream
-import java.io.File
 import java.util.*
 import java.util.UUID.*
 import java.text.SimpleDateFormat
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 
-class PublishScreen : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent{
-            PublishScreenV()
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+fun PublishScreenV(uris: Uri?, viewModel: PublishViewModel) {
+    //Atributo Scope
+    val scope: CoroutineScope by viewModel.scope.observeAsState(initial = rememberCoroutineScope())
+
+    //Atributo state
+    val state: ModalBottomSheetState by viewModel.state.observeAsState(
+        initial = rememberModalBottomSheetState(
+            initialValue = ModalBottomSheetValue.Hidden
+        )
+    )
+
+    //Pantalla de cargando datos
+    val isLoading: Boolean by viewModel.isLoading.observeAsState(initial = false)
+
+    if (isLoading) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(Modifier.align(Alignment.Center))
+            Spacer(Modifier.height(16.dp))
+            Text(
+                text = "Uploading product to DataBase", style = TextStyle(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 28.sp
+                )
+            )
         }
+    } else {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+        ) {
+            TopBarPublishScreen()
+            TopView(uris, viewModel, scope, state)
+            MiddleView(viewModel)
+            bottomView(viewModel)
+        }
+        selectableWindow(viewModel, scope, state)
     }
 }
 
 @Composable
-fun PublishScreenV() {
-    TopView()
-}
-
-@Composable
-fun TopBarPublishScreen(){
+fun TopBarPublishScreen() {
     val context = LocalContext.current
-    TopAppBar (
+    TopAppBar(
         modifier = Modifier.fillMaxWidth(),
         backgroundColor = Color.White
-    ){
-        Row(){
+    ) {
+        Row() {
             IconButton(onClick = {
                 val intent = Intent(context, HomeActivity::class.java)
                 context.startActivity(intent)
@@ -91,7 +109,11 @@ fun TopBarPublishScreen(){
                 Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Go Back")
             }
         }
-        Row(Modifier.fillMaxSize(), Arrangement.Center, verticalAlignment = Alignment.CenterVertically){
+        Row(
+            Modifier.fillMaxSize(),
+            Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Text(text = "Publish")
         }
     }
@@ -100,291 +122,347 @@ fun TopBarPublishScreen(){
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun TopView() {
-    val context = LocalContext.current
+fun TopView(
+    uris: Uri?,
+    viewModel: PublishViewModel,
+    scope: CoroutineScope,
+    state: ModalBottomSheetState
+) {
+    //Atributo nombre del producto a agregar
+    val prodName: String by viewModel.prodName.observeAsState(initial = " ")
 
-    val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-    val currentDate = Date()
-    val publishDat = dateFormat.format(currentDate)
+    //Atributo precio del producto a agregar
+    val prodPrice: String by viewModel.prodPrice.observeAsState(initial = " ")
 
+    //Atributo de la imagen a mostrar
+    val contentImage: Uri? by viewModel.contentImage.observeAsState()
 
-    var contentImage = remember{
-        mutableStateOf<Uri?>(null)
-    }
-    var tempImageFilePath = ""
-    var tookPic = remember{
-        mutableStateOf<Boolean>(false)
-    }
-    val pickMedia = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()){
-            uri: Uri? -> contentImage.value = uri
-    }
-    var tempImageUri:Uri? = null
-    val camera = rememberLauncherForActivityResult(TakePicture()){success->
-        tookPic.value = success
-        if(success){
-            contentImage.value = tempImageUri
+    viewModel.onChangeImage(uris)
+
+    Row(modifier = Modifier.padding(16.dp)) {
+        Box(
+            modifier = Modifier
+                .background(Color(0xFFFB8500))
+                .height(150.dp)
+                .width(150.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .border(1.dp, Color.Black, RoundedCornerShape(16.dp))
+        ) {
+            PhotoView(imagePath = contentImage, scope = scope, state = state, viewModel = viewModel)
+        }
+        Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp)) {
+            OutlinedTextField(
+                value = prodName,
+                label = { Text(text = "Product Name") },
+                onValueChange = {
+                    viewModel.onPublishChanged(
+                        it,
+                        prodPrice,
+                        viewModel.prodDescr.value!!,
+                        viewModel.prodTags.value!!,
+                        viewModel.selectedItem.value!!
+                    )
+                },
+                singleLine = true,
+                maxLines = 1
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            OutlinedTextField(
+                value = prodPrice,
+                label = { Text(text = "Price") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                onValueChange = {
+                    viewModel.onPublishChanged(
+                        prodName,
+                        it,
+                        viewModel.prodDescr.value!!,
+                        viewModel.prodTags.value!!,
+                        viewModel.selectedItem.value!!
+                    )
+                },
+                singleLine = true,
+                maxLines = 1
+            )
         }
     }
-    val state = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
-    val scope = rememberCoroutineScope()
+}
 
-    var prodName by remember {
-        mutableStateOf("")
-    }
-
-    var prodPrice by remember {
-        mutableStateOf("")
-    }
-
-    var prodDescr by remember {
-        mutableStateOf("")
-    }
-
-    var prodTags by remember {
-        mutableStateOf("")
-    }
-
-    var selectedItem by remember{
-        mutableStateOf("New")
-    }
-
+@Composable
+fun MiddleView(
+    viewModel: PublishViewModel
+) {
+    //Tipos de productos
     val prodType = arrayOf("Material", "Product", "Accessory", "Other")
 
-    var expanded by remember {
-        mutableStateOf(false)
-    }
+    //Atributo descripcion del producto a agregar
+    val prodDescr: String by viewModel.prodDescr.observeAsState(initial = " ")
 
+    //Atributo new or old del producto
+    val selectedItem: String by viewModel.selectedItem.observeAsState(initial = "New")
+
+    //Valor seleccionado en el combobox
+    val valueType: String by viewModel.valueType.observeAsState(initial = prodType[0])
+
+    //Si esta expandida el combobox
+    val expanded: Boolean by viewModel.expanded.observeAsState(initial = false)
+
+    //Cambia el icono dependiendo del valor de expandido
     val icon = if (expanded)
         Icons.Filled.KeyboardArrowUp
     else
         Icons.Filled.KeyboardArrowDown
 
-    var valueType by remember {
-        mutableStateOf(prodType[0])
+    //Tamaño del textfield
+    var mTextFieldSize by remember { mutableStateOf(Size.Zero) }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp)
+    ) {
+        OutlinedTextField(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(90.dp),
+            value = prodDescr,
+            label = { Text(text = "Description") },
+            onValueChange = {
+                viewModel.onPublishChanged(
+                    viewModel.prodName.value!!,
+                    viewModel.prodPrice.value!!,
+                    it,
+                    viewModel.prodTags.value!!,
+                    selectedItem
+                )
+            })
     }
 
-    var mTextFieldSize by remember { mutableStateOf(Size.Zero)}
+    Spacer(modifier = Modifier.height(12.dp))
 
-    var isRunning by remember {mutableStateOf(false)}
+    Text(
+        text = "What is its condition",
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+        fontSize = 15.sp
+    )
 
+    Row(
+        modifier = Modifier
+            .selectableGroup()
+    ) {
+        Row(
+            modifier = Modifier
+                .selectable(
+                    selected = (selectedItem == "New"),
+                    onClick = {
+                        viewModel.onPublishChanged(
+                            viewModel.prodName.value!!,
+                            viewModel.prodPrice.value!!,
+                            prodDescr,
+                            viewModel.prodTags.value!!,
+                            "New"
+                        )
+                    },
+                    role = Role.RadioButton
+                )
+                .padding(vertical = 4.dp, horizontal = 8.dp)
+        ) {
+            RadioButtonStyle(selectedItem, "New")
+        }
+        Row(
+            modifier = Modifier
+                .selectable(
+                    selected = (selectedItem == "Used"),
+                    onClick = {
+                        viewModel.onPublishChanged(
+                            viewModel.prodName.value!!,
+                            viewModel.prodPrice.value!!,
+                            prodDescr,
+                            viewModel.prodTags.value!!,
+                            "Used"
+                        )
+                    },
+                    role = Role.RadioButton
+                )
+                .padding(vertical = 8.dp)
+        ) {
+            RadioButtonStyle(selectedItem, "Used")
+        }
+    }
 
     Column(
-        Modifier
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState())) {
-        TopBarPublishScreen()
-        Row(modifier = Modifier.padding(16.dp)) {
-            Box(
-                modifier = Modifier
-                    .background(Color(0xFFFB8500))
-                    .height(150.dp)
-                    .width(150.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .border(1.dp, Color.Black, RoundedCornerShape(16.dp))
-            ) {
-                PhotoView(imagePath = contentImage.value, scope = scope, state = state)
-            }
-            Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp)) {
-                OutlinedTextField(
-                    value = prodName,
-                    label = { Text(text = "Product Name") },
-                    onValueChange = { newText: String ->
-                        if (newText.length <= 30) {
-                            prodName = newText
-                        }
-                    })
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                OutlinedTextField(
-                    value = prodPrice,
-                    label = { Text(text = "Price") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    onValueChange = { newPrice: String ->
-                        if (newPrice.length <= 9) {
-                            prodPrice = newPrice
-                        }
-                    })
-            }
-
-        }
-
-        Row(
+        modifier = Modifier
+            .padding(16.dp)
+    ) {
+        Text(text = "Type of product", fontSize = 15.sp)
+        OutlinedTextField(
+            value = valueType,
+            readOnly = true,
+            onValueChange = { viewModel.onChangeComboBox(it, expanded) },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp)
-        ) {
-
-            OutlinedTextField(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(90.dp),
-                value = prodDescr,
-                label = { Text(text = "Description") },
-                onValueChange = { newDescrp: String ->
-                    if (newDescrp.length <= 250) {
-                        prodDescr = newDescrp
-                    }
-                })
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Text(
-            text = "What is its condition",
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-            fontSize = 15.sp
+                .padding(vertical = 4.dp)
+                .onGloballyPositioned { coordinates ->
+                    mTextFieldSize = coordinates.size.toSize()
+                },
+            label = { Text("Label") },
+            trailingIcon = {
+                Icon(icon, "contentDescription",
+                    Modifier.clickable { viewModel.onChangeComboBox(valueType, !expanded) })
+            }
         )
-
-        Row(
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { viewModel.onChangeComboBox(valueType, false) },
             modifier = Modifier
-                .selectableGroup()
+                .width(with(LocalDensity.current) { mTextFieldSize.width.toDp() })
         ) {
-            Row(
-                modifier = Modifier
-                    .selectable(
-                        selected = (selectedItem == "New"),
-                        onClick = { selectedItem = "New" },
-                        role = Role.RadioButton
-                    )
-                    .padding(vertical = 4.dp, horizontal = 8.dp)
-            ) {
-                RadioButtonStyle(selectedItem, "New")
-            }
-            Row(
-                modifier = Modifier
-                    .selectable(
-                        selected = (selectedItem == "Used"),
-                        onClick = { selectedItem = "Used" },
-                        role = Role.RadioButton
-                    )
-                    .padding(vertical = 8.dp)
-            ) {
-                RadioButtonStyle(selectedItem, "Used")
-            }
-        }
-
-        Column(
-            modifier = Modifier
-                .padding(16.dp)
-        ) {
-            Text(text = "Type of product", fontSize = 15.sp)
-            OutlinedTextField(
-                value = valueType,
-                readOnly = true,
-                onValueChange = { valueType = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp)
-                    .onGloballyPositioned { coordinates ->
-                        // This value is used to assign to
-                        // the DropDown the same width
-                        mTextFieldSize = coordinates.size.toSize()
-                    },
-                label = { Text("Label") },
-                trailingIcon = {
-                    Icon(icon, "contentDescription",
-                        Modifier.clickable { expanded = !expanded })
+            prodType.forEach { label ->
+                DropdownMenuItem(onClick = {
+                    viewModel.onChangeComboBox(label, false)
+                }) {
+                    Text(text = label)
                 }
-            )
-            DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false },
-                modifier = Modifier
-                    .width(with(LocalDensity.current) { mTextFieldSize.width.toDp() })
-            ) {
-                prodType.forEach { label ->
-                    DropdownMenuItem(onClick = {
-                        valueType = label
-                        expanded = false
-                    }) {
-                        Text(text = label)
-                    }
-                }
-            }
-        }
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 16.dp, end = 16.dp, top = 0.dp, bottom = 8.dp)
-        ) {
-
-            OutlinedTextField(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(90.dp),
-                value = prodTags,
-                label = { Text(text = "Tags") },
-                onValueChange = { newTags: String ->
-                    if (newTags.length <= 250) {
-                        prodTags = newTags
-                    }
-                })
-        }
-
-        Column(
-            modifier = Modifier
-                .padding(start = 16.dp, end = 16.dp)
-                .fillMaxWidth(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Button(
-                onClick = {
-                    try{
-                        val productOb = ProductObj(
-                            image = "",
-                            name = prodName,
-                            price = prodPrice.toInt(),
-                            description = prodDescr,
-                            condition = selectedItem,
-                            type = valueType,
-                            tags = prodTags,
-                            publishDate = publishDat,
-                            stock = 1,
-                            technicalSpecs = "TS"
-                        )
-                        Toast.makeText(context, "Publishing...", Toast.LENGTH_LONG).show()
-                        val imgUrl = uploadImageToDataBase(context,contentImage.value,productOb)
-                        prodName = ""
-                        prodPrice = ""
-                        prodDescr = ""
-                        selectedItem = ""
-                        valueType = ""
-                        prodTags=""
-                        contentImage.value = null
-                    }
-                    catch (e: Exception){
-                        Toast.makeText(context, "Error While Trying upload. Please Try Again", Toast.LENGTH_LONG).show()
-                        prodName = ""
-                        prodPrice = ""
-                        prodDescr = ""
-                        selectedItem = ""
-                        valueType = ""
-                        prodTags=""
-                        contentImage.value = null
-                    }
-
-                    },
-                colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFFFB8500))
-            ) {
-                Text(text = "Publish")
             }
         }
     }
+
+}
+
+
+@Composable
+fun bottomView(viewModel: PublishViewModel) {
+
+    //Contexto de la aplicacion
+    val context = LocalContext.current
+
+    //Atributo de los tags del producto a agregar
+    val prodTags: String by viewModel.prodTags.observeAsState(initial = "")
+
+    //Atributo de la fecha actual
+    val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+    val currentDate = Date()
+    val publishDat = dateFormat.format(currentDate)
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp, end = 16.dp, top = 0.dp, bottom = 8.dp)
+    ) {
+        OutlinedTextField(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(90.dp),
+            value = prodTags,
+            label = { Text(text = "Tags") },
+            onValueChange = {
+                viewModel.onPublishChanged(
+                    viewModel.prodName.value!!,
+                    viewModel.prodPrice.value!!,
+                    viewModel.prodDescr.value!!,
+                    it,
+                    viewModel.selectedItem.value!!
+                )
+            })
+    }
+
+    Column(
+        modifier = Modifier
+            .padding(start = 16.dp, end = 16.dp)
+            .fillMaxWidth(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Button(
+            onClick = {
+                try {
+                    Log.d(
+                        TAG,
+                        "PreProd----------------------------------------------------------------------------------------------"
+                    )
+                    val productOb = ProductObj(
+                        image = " ",
+                        name = viewModel.prodName.value!!,
+                        price = viewModel.prodPrice.value!!.toInt(),
+                        description = viewModel.prodDescr.value!!,
+                        condition = viewModel.selectedItem.value!!,
+                        type = viewModel.valueType.value!!,
+                        tags = prodTags,
+                        publishDate = publishDat,
+                        stock = 1,
+                        technicalSpecs = "TS"
+                    )
+                    Log.d(
+                        TAG,
+                        "PostProd----------------------------------------------------------------------------------------------"
+                    )
+                    Toast.makeText(context, "Publishing...", Toast.LENGTH_LONG).show()
+                    Log.d(
+                        TAG,
+                        "PreUpload----------------------------------------------------------------------------------------------"
+                    )
+                    Log.d(TAG, viewModel.contentImage.value.toString())
+                    viewModel.onChangeIsLoading(true)
+                    viewModel.uploadImageToDataBase(context, productOb)
+                    //Clear output
+                    viewModel.onPublishChanged("", "", "", "", "Used")
+                    viewModel.onChangeComboBox("", viewModel.expanded.value!!)
+                    Log.d(ContentValues.TAG, "Clear output")
+                } catch (e: Exception) {
+                    Log.d(
+                        TAG,
+                        "----------------------------------------------------------------------------------------------"
+                    )
+                    Log.d(TAG, e.toString())
+                    Log.d(TAG, e.message.toString())
+                    Toast.makeText(
+                        context,
+                        "Error While Trying upload. Please Try Again",
+                        Toast.LENGTH_LONG
+                    ).show()
+                    viewModel.onPublishChanged("", "", "", "", "Used")
+                    viewModel.onChangeComboBox("", viewModel.expanded.value!!)
+                    viewModel.onChangeImage(null)
+                }
+
+            },
+            colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFFFB8500))
+        ) {
+            Text(text = "Publish")
+        }
+    }
+}
+
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+fun selectableWindow(
+    viewModel: PublishViewModel,
+    scope: CoroutineScope,
+    state: ModalBottomSheetState
+) {
+    //Context of the application
+    val context = LocalContext.current
+
+    //Window that allows photos to be picked from the gallery
+    val pickMedia =
+        rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+            viewModel.onChangeImage(uri)
+            Log.d(TAG,viewModel.contentImage.value.toString())
+            val param1 = viewModel.contentImage.value
+            val intent = Intent(context, PublishScreen::class.java).apply {
+                putExtra("imgUris", param1.toString())
+            }
+            context.startActivity(intent)
+        }
 
     BottomActionSheet(state = state, scope = scope,
         onTakeImage = {
             if (it) {
-                // Camera
-                tempImageUri = FileProvider.getUriForFile(
-                    context,
-                    "com.example.campustrade.provider",
-                    createImageFile(context).also {
-                        tempImageFilePath = it.absolutePath
-                    })
-                camera.launch(tempImageUri)
+                //Camera
+                val intent = Intent(context, LaunchCameraScreen::class.java)
+                context.startActivity(intent)
             } else {
                 // Gallery
                 pickMedia.launch("image/*")
@@ -395,85 +473,23 @@ fun TopView() {
     {
 
     }
-
 }
-
-
-private fun createImageFile(context:Context): File {
-    val storageDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
-    return File.createTempFile("temp_image",".jpg",storageDir)
-}
-
-
-fun uploadImageToDataBase(context: Context, contentImage: Uri?, productOb: ProductObj): String {
-
-    // create the storage reference
-    val storageRef = Firebase.storage.reference
-
-    //Transform to bitmap
-    val inputStream = context.contentResolver.openInputStream(contentImage!!)
-    val bitmp:Bitmap = BitmapFactory.decodeStream(inputStream)
-
-    //Bitmap to bytes
-    val outputStream = ByteArrayOutputStream()
-    bitmp.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
-    val bytes = outputStream.toByteArray()
-
-    //Create variable to store url
-    var imgUrl = ""
-
-    //Upload to DB
-    val storeR = storageRef.child("images/${UUID.randomUUID()}")
-    val uploadTask = storeR.putBytes(bytes)
-
-    uploadTask.addOnSuccessListener { taskSnapshot ->
-        storeR.downloadUrl.addOnSuccessListener { uri ->
-            imgUrl = uri.toString()
-            productOb.changeImage(imgUrl)
-            uploadProductToDB(productOb,context)
-        }
-    }
-    return imgUrl
-}
-
-
-private fun uploadProductToDB(productOb: ProductObj,context: Context) {
-    // on below line creating an instance of firebase firestore.
-    val db: FirebaseFirestore = FirebaseFirestore.getInstance()
-    //creating a collection reference for our Firebase Firestore database.
-    val dbCourses: CollectionReference = db.collection("ProductsDB")
-
-    //adding our data to our courses object class.
-    //below method is use to add data to Firebase Firestore.
-    dbCourses.add(productOb).addOnSuccessListener {
-       // after the data addition is successful
-       // we are displaying a success toast message.
-       Log.d(TAG,"Subio----------------------------------------------------------------------")
-       Toast.makeText(
-                context,
-                "Your Product has been added to Firebase Firestore",
-                Toast.LENGTH_LONG
-            ).show()
-        }.addOnFailureListener { e ->
-            // this method is called when the data addition process is failed.
-            // displaying a toast message when data addition is failed.
-            Toast.makeText(context, "Fail to add product", Toast.LENGTH_LONG).show()
-        }
-    }
-
-
-
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-private fun PhotoView(modifier: Modifier = Modifier, imagePath:Uri?, scope: CoroutineScope, state: ModalBottomSheetState){
+private fun PhotoView(
+    modifier: Modifier = Modifier,
+    imagePath: Uri?,
+    scope: CoroutineScope,
+    state: ModalBottomSheetState,
+    viewModel: PublishViewModel
+) {
     Image(
-        painter = if(imagePath == null){
+        painter = if (viewModel.contentImage.value == null) {
             painterResource(id = R.drawable.camera)
-        }
-        else{
+        } else {
             rememberAsyncImagePainter(
-                model = imagePath,//ImageRequest.Builder(context = LocalContext.current)
+                model = viewModel.contentImage.value,//ImageRequest.Builder(context = LocalContext.current)
                 //.crossfade(true).data(imagePath).build(),
                 filterQuality = FilterQuality.High
             )
@@ -489,10 +505,9 @@ private fun PhotoView(modifier: Modifier = Modifier, imagePath:Uri?, scope: Coro
                 }
             }
             .background(color = Color.Transparent),
-        contentScale = if(imagePath == null){
+        contentScale = if (imagePath == null) {
             ContentScale.Inside
-        }
-        else{
+        } else {
             ContentScale.FillWidth
         }
     )
@@ -500,24 +515,34 @@ private fun PhotoView(modifier: Modifier = Modifier, imagePath:Uri?, scope: Coro
 }
 
 
-
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-private fun BottomActionSheet(state:ModalBottomSheetState, scope: CoroutineScope,onTakeImage:(isCamera:Boolean)-> Unit, modalBottomSheetLayoutScope: @Composable ()->Unit ){
+private fun BottomActionSheet(
+    state: ModalBottomSheetState,
+    scope: CoroutineScope,
+    onTakeImage: (isCamera: Boolean) -> Unit,
+    modalBottomSheetLayoutScope: @Composable () -> Unit
+) {
     ModalBottomSheetLayout(
         sheetState = state,
         sheetContent = {
-            Column(modifier = Modifier.fillMaxHeight()){
-                BottomActionItem(title = "Camera", resource = R.drawable.baseline_photo_camera_24, isCamera = true){
-                        isCamera ->
+            Column(modifier = Modifier.fillMaxHeight()) {
+                BottomActionItem(
+                    title = "Camera",
+                    resource = R.drawable.baseline_photo_camera_24,
+                    isCamera = true
+                ) { isCamera ->
                     scope.launch {
                         state.hide()
                     }
                     onTakeImage(isCamera)
                 }
 
-                BottomActionItem(title = "Gallery", resource = R.drawable.gallery, isCamera = false){
-                        isCamera ->
+                BottomActionItem(
+                    title = "Gallery",
+                    resource = R.drawable.gallery,
+                    isCamera = false
+                ) { isCamera ->
                     scope.launch {
                         state.hide()
                     }
@@ -533,14 +558,21 @@ private fun BottomActionSheet(state:ModalBottomSheetState, scope: CoroutineScope
 
 
 @Composable
-private fun BottomActionItem(modifier: Modifier = Modifier, title:String, resource:Int, isCamera:Boolean,onTakeImage:(isCamera:Boolean)-> Unit){
+private fun BottomActionItem(
+    modifier: Modifier = Modifier,
+    title: String,
+    resource: Int,
+    isCamera: Boolean,
+    onTakeImage: (isCamera: Boolean) -> Unit
+) {
     Row(modifier = modifier
         .fillMaxWidth()
         .height(50.dp)
         .clickable {
             onTakeImage(isCamera)
-        }){
-        Image(painter = painterResource(id = resource),
+        }) {
+        Image(
+            painter = painterResource(id = resource),
             contentDescription = null,
             modifier = modifier
                 .size(40.dp)
@@ -557,7 +589,7 @@ private fun BottomActionItem(modifier: Modifier = Modifier, title:String, resour
 
 
 @Composable
-private fun RadioButtonStyle(selectedItem: String, details:String) {
+private fun RadioButtonStyle(selectedItem: String, details: String) {
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.dp
     Box(
@@ -575,7 +607,7 @@ private fun RadioButtonStyle(selectedItem: String, details:String) {
             .padding(horizontal = 8.dp, vertical = 8.dp)
             .height(35.dp)
     ) {
-        Row(){//modifier = Modifier.fillMaxWidth()) {
+        Row() {//modifier = Modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier
                     .padding(start = 16.dp, top = 6.dp, bottom = 6.dp)
@@ -598,15 +630,8 @@ private fun RadioButtonStyle(selectedItem: String, details:String) {
     }
 }
 
-
-fun bitmapToByteArray(bitmap: Bitmap): ByteArray {
-    val outputStream = ByteArrayOutputStream()
-    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
-    return outputStream.toByteArray()
-}
-
 @Preview(showBackground = true)
 @Composable
-fun PreviewPublishScreen(){
-    PublishScreenV()
+fun PreviewPublishScreen() {
+    PublishScreenV(null, PublishViewModel())
 }

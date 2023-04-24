@@ -5,7 +5,7 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 
-class HistoryViewModel {
+class HistoryViewModel(private val repository: HistoryRepository) {
 
     fun returnImage(nombre: String): Int {
         if(nombre == "Lab Coat") return R.drawable.lab_coat
