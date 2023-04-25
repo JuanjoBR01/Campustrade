@@ -25,7 +25,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.platform.LocalContext
-import com.example.campustrade.HomeActivityMVVM
+import com.example.campustrade.home.HomeActivityMVVM
 import com.example.campustrade.R
 import com.example.campustrade.signup.SignUpScreen
 import com.example.campustrade.ui.theme.CampustradeTheme

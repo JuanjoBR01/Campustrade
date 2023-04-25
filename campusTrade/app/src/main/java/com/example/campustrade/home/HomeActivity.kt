@@ -33,14 +33,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.campustrade.publish.PublishScreen
 import com.example.campustrade.ui.theme.CampustradeTheme
 import com.example.campustrade.ui.theme.black
-import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.QuerySnapshot
-import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.firestore.ktx.toObjects
-import com.google.firebase.ktx.Firebase
 
 
 class HomeActivity : ComponentActivity() {

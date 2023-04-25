@@ -1,4 +1,4 @@
-package com.example.campustrade
+package com.example.campustrade.dtos
 
 data class UserObj(
     var name: String,
