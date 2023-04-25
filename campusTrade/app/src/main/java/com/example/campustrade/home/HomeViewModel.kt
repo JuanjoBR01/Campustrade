@@ -1,4 +1,4 @@
-package com.example.campustrade
+package com.example.campustrade.home
 
 import android.content.Context
 import android.content.Intent
@@ -10,6 +10,9 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.campustrade.*
+import com.example.campustrade.history.HistoryActivity
+import com.example.campustrade.publish.PublishScreen
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 

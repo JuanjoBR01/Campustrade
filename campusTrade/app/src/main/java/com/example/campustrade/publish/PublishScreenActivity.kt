@@ -1,4 +1,4 @@
-package com.example.campustrade
+package com.example.campustrade.publish
 
 import android.net.Uri
 import android.os.Bundle

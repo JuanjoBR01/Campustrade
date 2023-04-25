@@ -1,4 +1,4 @@
-package com.example.campustrade
+package com.example.campustrade.publish
 
 
 import android.content.Context
@@ -32,8 +32,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.toSize
-import com.google.firebase.database.*
-import com.google.firebase.firestore.CollectionReference
+import com.example.campustrade.LaunchCameraActivity
+import com.example.campustrade.R
 import com.google.firebase.firestore.FirebaseFirestore
 import java.io.File
 import java.util.concurrent.ExecutorService

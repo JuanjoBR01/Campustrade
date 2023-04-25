@@ -1,9 +1,11 @@
-package com.example.campustrade
+package com.example.campustrade.history
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
+import com.example.campustrade.Product
+import com.example.campustrade.R
 
 class HistoryViewModel(private val repository: HistoryRepository) {
 
