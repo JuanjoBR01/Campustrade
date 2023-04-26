@@ -50,7 +50,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import com.example.campustrade.HomeActivity
-import com.example.campustrade.LaunchCameraScreen
+import com.example.campustrade.cameraPublish.LaunchCameraScreen
 import com.example.campustrade.R
 import com.example.campustrade.dtos.ProductObj
 

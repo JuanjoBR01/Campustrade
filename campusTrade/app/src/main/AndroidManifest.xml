@@ -44,7 +44,7 @@
             android:label="@string/title_activity_home_mvvm"
             android:theme="@style/Theme.Campustrade" />
         <activity
-            android:name=".LaunchCameraScreen"
+            android:name=".cameraPublish.LaunchCameraScreen"
             android:screenOrientation="portrait"
             android:exported="false"
             android:label="LaunchCameraScreen"
