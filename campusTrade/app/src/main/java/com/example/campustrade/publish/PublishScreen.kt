@@ -1,4 +1,4 @@
-package com.example.campustrade
+package com.example.campustrade.publish
 
 import android.content.ContentValues
 import android.content.ContentValues.TAG
@@ -49,7 +49,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.campustrade.HomeActivity
+import com.example.campustrade.LaunchCameraScreen
+import com.example.campustrade.R
+import com.example.campustrade.dtos.ProductObj
 
 
 @OptIn(ExperimentalMaterialApi::class)

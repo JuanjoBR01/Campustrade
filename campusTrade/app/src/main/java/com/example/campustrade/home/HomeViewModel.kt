@@ -1,4 +1,4 @@
-package com.example.campustrade
+package com.example.campustrade.home
 
 import android.content.Context
 import android.content.Intent
@@ -10,14 +10,16 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.ktx.toObjects
-import com.google.firebase.firestore.CollectionReference
-import com.google.firebase.firestore.QuerySnapshot
+import com.example.campustrade.*
+import com.example.campustrade.history.HistoryActivity
+import com.example.campustrade.publish.PublishScreen
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 class HomeViewModel(private val repository: HomeRepository): ViewModel() {
+
+    private val _preference = MutableLiveData<String>()
+    val preference : LiveData<String> = _preference
 
     private var _productList = MutableLiveData<List<ProductDB>>()
     val productList : LiveData<List<ProductDB>> = _productList
@@ -37,6 +39,16 @@ class HomeViewModel(private val repository: HomeRepository): ViewModel() {
         if (value.length <= maxChar)
         {
             _value.value = value
+        }
+    }
+
+    fun onPreferenceChange(value: String){
+        if(value != "Used" && value != "New")
+        {
+            _preference.value = "Accesory"
+        }
+        else{
+            _preference.value = value
         }
     }
 
@@ -90,28 +102,28 @@ class HomeViewModel(private val repository: HomeRepository): ViewModel() {
         return finalList
     }
 
-    fun arrangeProductListFirestore(search: String){
-        val productList = arrayListOf<ProductDB>()
+    fun arrangeProductListFirestore(search: String, preference: String){
+        var productList = arrayListOf<ProductDB>()
         var finalList = arrayListOf<ProductDB>()
 
         runBlocking{
             launch{
                 val actualList = repository.getData()
 
-                val preference = "Accesory"
+                //val preference = "Used"
+                val strategy = StrategyContext(SortingProductsStrategyType())
 
-                actualList.forEach { producto ->
-                    if(producto.type == preference && producto.name.length > 2)
-                    {
-                        productList.add(producto)
-                    }
+                //val strategy = SortingProductsStrategyType()
+
+                if(preference == "Used"){
+                    strategy.setStrategy(SortingProductsStrategyCondition())
                 }
-                actualList.forEach { producto ->
-                    if(producto.type != preference && producto.name.length > 2)
-                    {
-                        productList.add(producto)
-                    }
+                if(preference == "New"){
+                    strategy.setStrategy(SortingProductsStrategyCondition())
                 }
+
+                productList = strategy.executeStrategy(preference, actualList)
+
 
                 if(search != "")
                 {

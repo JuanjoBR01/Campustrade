@@ -1,4 +1,4 @@
-package com.example.campustrade
+package com.example.campustrade.login
 
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.stringResource
@@ -25,12 +25,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.platform.LocalContext
+import com.example.campustrade.home.HomeActivityMVVM
+import com.example.campustrade.R
+import com.example.campustrade.signup.SignUpScreen
 import com.example.campustrade.ui.theme.CampustradeTheme
 import com.example.campustrade.ui.theme.darkBlue
 import com.example.campustrade.ui.theme.orange
 import com.example.campustrade.ui.theme.yellow
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseUser
 
 
 class LoginScreen : ComponentActivity() {
@@ -53,7 +54,6 @@ fun LoginScreenComposable(modifier: Modifier = Modifier, viewModel: LoginViewMod
     val emailField: String by viewModel.email.observeAsState(initial = "")
     val passwordField: String by viewModel.password.observeAsState(initial = "")
     val loginEnable: Boolean by viewModel.loginEnable.observeAsState(initial = false)
-    val currentUser: FirebaseUser? by viewModel.currentUser.observeAsState(initial = null)
 
 
     val context = LocalContext.current
@@ -79,7 +79,10 @@ fun LoginScreenComposable(modifier: Modifier = Modifier, viewModel: LoginViewMod
 
         OutlinedTextField(
             value = emailField,
-            onValueChange = {viewModel.onLoginChanged(it, passwordField)},
+            onValueChange = {
+                if (it.length<41)
+                    viewModel.onLoginChanged(it, passwordField)
+                            },
             label = { Text(stringResource(id = R.string.user_login_view),
                 color = darkBlue,
                 style = MaterialTheme.typography.body1) },
@@ -99,7 +102,10 @@ fun LoginScreenComposable(modifier: Modifier = Modifier, viewModel: LoginViewMod
 
         OutlinedTextField(
             value = passwordField,
-            onValueChange = {viewModel.onLoginChanged(emailField, it)},
+            onValueChange = {
+                if (it.length < 51)
+                    viewModel.onLoginChanged(emailField, it)
+                            },
             label = { Text(stringResource(id = R.string.password_login_view),
                 color = darkBlue) },
             leadingIcon = {
@@ -126,7 +132,7 @@ fun LoginScreenComposable(modifier: Modifier = Modifier, viewModel: LoginViewMod
                         "Login successful",
                         Toast.LENGTH_LONG
                     ).show()
-                    val intent = Intent(context, HomeActivity::class.java)
+                    val intent = Intent(context, HomeActivityMVVM::class.java)
                     context.startActivity(intent)
                 } else {
                     Toast.makeText(
