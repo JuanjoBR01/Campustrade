@@ -67,6 +67,16 @@ class PublishRepository : RepositoryInterface {
         return deferred.await()
     }
 
+    override suspend fun createUser(
+        vt: String,
+        nn: String,
+        em: String,
+        pw: String,
+        imgUrl: String
+    ): Boolean {
+        TODO("Not yet implemented")
+    }
+
     override suspend fun getData(): List<ProductDB> {
         TODO("Not needed")
     }
