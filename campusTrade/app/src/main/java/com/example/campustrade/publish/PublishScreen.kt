@@ -1,7 +1,6 @@
 package com.example.campustrade.publish
 
 import android.content.ContentResolver
-import android.content.ContentValues
 import android.content.ContentValues.TAG
 import android.content.Intent
 import android.graphics.Bitmap
@@ -23,7 +22,6 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.runtime.*
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,11 +50,11 @@ import com.example.campustrade.R
 import com.example.campustrade.cameraPublish.LaunchCameraScreen
 import com.example.campustrade.dtos.ProductObj
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.UUID.*
+import androidx.compose.runtime.livedata.observeAsState as observeAsState
 
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -79,32 +77,8 @@ fun PublishScreenV(uris: Uri?, viewModel: PublishViewModel) {
     //Boton habilitado
     val isAvailable: Boolean by viewModel.isAvailable.observeAsState(initial = false)
 
-    //Mostrar dialogo de subido correctamente
-    val showDialog: Boolean by viewModel.prodDialg.observeAsState(initial = false)
-
-    //Subio producto
-    val uplProd: Boolean by viewModel.prodUpl.observeAsState(initial = false)
-
-    if (showDialog) {
-        if(uplProd){
-            SimpleAlertDialog(
-                title = "Upload Product to DB",
-                message = "Product was uploaded successfully",
-                onDismiss = { viewModel.onCloseDialog(false) }
-            )
-            //Clear output
-            viewModel.onPublishChanged( " ", " ", " ", " ", " ")
-            viewModel.onChangeComboBox(" ", viewModel.expanded.value!!)
-            viewModel.onChangeImage(null)
-        }
-        else{
-            SimpleAlertDialog(
-                title = "Upload Product to DB",
-                message = "There was an error uploading product to DB, Please try again",
-                onDismiss = { viewModel.onCloseDialog(false)  }
-            )
-        }
-    }
+    SuccesfullUploadDialog(viewModel)
+    noInternetDialog(viewModel)
 
     if (isLoading) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -131,6 +105,60 @@ fun PublishScreenV(uris: Uri?, viewModel: PublishViewModel) {
         selectableWindow(viewModel, scope, state)
     }
 }
+
+@Composable
+fun noInternetDialog(viewModel: PublishViewModel) {
+    //Conectado a internet
+    val isConnected: Boolean by viewModel.networkState.observeAsState(initial = false)
+
+    if (!isConnected) {
+        AlertDialog(
+            onDismissRequest = {},
+            title = { Text("No Internet Connection") },
+            text = { Text(viewModel.message.value!!) },
+            confirmButton = {},
+            dismissButton = {}
+        )
+        viewModel.onActivateButton(false)
+    }
+    else{
+        viewModel.onActivateButton(true)
+    }
+
+}
+
+
+@Composable
+fun SuccesfullUploadDialog(viewModel: PublishViewModel) {
+
+    //Mostrar dialogo de subido correctamente
+    val showDialog: Boolean by viewModel.prodDialg.observeAsState(initial = false)
+
+    //Subio producto
+    val uplProd: Boolean by viewModel.prodUpl.observeAsState(initial = false)
+
+    if (showDialog) {
+        if (uplProd) {
+            SimpleAlertDialog(
+                title = "Upload Product to DB",
+                message = viewModel.message.value!!,
+                onDismiss = { viewModel.onCloseDialog(false) }
+            )
+            //Clear output
+            viewModel.onPublishChanged(" ", " ", " ", " ", " ")
+            viewModel.onChangeComboBox(" ", viewModel.expanded.value!!)
+            viewModel.onChangeImage(null)
+            viewModel.onActivateButton(false)
+        } else {
+            SimpleAlertDialog(
+                title = "Upload Product to DB",
+                message = viewModel.message.value!!,
+                onDismiss = { viewModel.onCloseDialog(false) }
+            )
+        }
+    }
+}
+
 
 @Composable
 fun TopBarPublishScreen() {
@@ -444,7 +472,8 @@ fun bottomView(viewModel: PublishViewModel) {
                     Toast.makeText(context, "Publishing...", Toast.LENGTH_LONG).show()
 
                     //Transform to bitmap
-                    val inputStream = context.contentResolver.openInputStream(viewModel.contentImage.value!!)
+                    val inputStream =
+                        context.contentResolver.openInputStream(viewModel.contentImage.value!!)
                     val bitmp: Bitmap = BitmapFactory.decodeStream(inputStream)
 
                     //Upload product
@@ -679,5 +708,5 @@ fun SimpleAlertDialog(
 @Preview(showBackground = true)
 @Composable
 fun PreviewPublishScreen() {
-    PublishScreenV(null, PublishViewModel())
+    PublishScreen()
 }
