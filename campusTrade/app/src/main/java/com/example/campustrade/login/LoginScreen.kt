@@ -23,6 +23,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.platform.LocalContext
 import com.example.campustrade.home.HomeActivityMVVM
@@ -32,15 +33,17 @@ import com.example.campustrade.ui.theme.CampustradeTheme
 import com.example.campustrade.ui.theme.darkBlue
 import com.example.campustrade.ui.theme.orange
 import com.example.campustrade.ui.theme.yellow
+import com.example.campustrade.data.Resource
+import org.intellij.lang.annotations.JdkConstants.HorizontalAlignment
 
 
 class LoginScreen : ComponentActivity() {
-
+    private val viewModel by viewModels<LoginViewModel>()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             CampustradeTheme{
-                LoginScreenComposable(viewModel = LoginViewModel(LoginRepository()))
+                LoginScreenComposable(viewModel = viewModel)
             }
         }
     }
@@ -54,6 +57,9 @@ fun LoginScreenComposable(modifier: Modifier = Modifier, viewModel: LoginViewMod
     val emailField: String by viewModel.email.observeAsState(initial = "")
     val passwordField: String by viewModel.password.observeAsState(initial = "")
     val loginEnable: Boolean by viewModel.loginEnable.observeAsState(initial = false)
+    val signupEnabled: Boolean by viewModel.signupEnable.observeAsState(initial = true)
+
+    val loginFlow = viewModel?.loginFlow?.collectAsState()
 
 
     val context = LocalContext.current
@@ -125,7 +131,11 @@ fun LoginScreenComposable(modifier: Modifier = Modifier, viewModel: LoginViewMod
 
         Button(
             onClick = {
+                      viewModel?.login(emailField, passwordField)
+
+                /*
                 var aux = viewModel.onLoginSelected(emailField, passwordField)
+
                 if (aux) {
                     Toast.makeText(
                         context,
@@ -141,6 +151,8 @@ fun LoginScreenComposable(modifier: Modifier = Modifier, viewModel: LoginViewMod
                         Toast.LENGTH_LONG
                     ).show()
                 }
+
+                 */
             },
             colors = ButtonDefaults.buttonColors(
                 backgroundColor = orange,
@@ -173,7 +185,8 @@ fun LoginScreenComposable(modifier: Modifier = Modifier, viewModel: LoginViewMod
                 defaultElevation = 6.dp,
                 pressedElevation = 8.dp,
                 disabledElevation = 0.dp
-            )
+            ),
+            enabled = signupEnabled
 
         ) {
             Text(stringResource(id = R.string.sign_up_button),
@@ -192,11 +205,35 @@ fun LoginScreenComposable(modifier: Modifier = Modifier, viewModel: LoginViewMod
 
             )
 
+        loginFlow?.value?.let {
+            when(it) {
+                is Resource.Failure ->{
+                    val context = LocalContext.current
+                    Toast.makeText(context, it.exception.message, Toast.LENGTH_SHORT).show()
+                }
+                is Resource.Loading -> {
+                    CircularProgressIndicator(Modifier.align(Alignment.CenterHorizontally))
+
+                }
+                is Resource.Success -> {
+                    LaunchedEffect(Unit) {
+                        val intent = Intent(context, HomeActivityMVVM::class.java)
+                        context.startActivity(intent)
+                    }
+                }
+                Resource.PastFailure -> {
+                    println("Just failed")
+                }
+
+            }
+        }
+
     }
 
 }
 
 
+/*
 @Preview
 @Composable
 fun LoginScreenPreview() {
@@ -204,3 +241,4 @@ fun LoginScreenPreview() {
         LoginScreenComposable(viewModel = LoginViewModel(LoginRepository()))
     }
 }
+*/
