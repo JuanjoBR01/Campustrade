@@ -1,7 +1,9 @@
 package com.example.campustrade.publish
 
 import android.content.ContentValues.TAG
+import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.*
 import android.util.Log
 import androidx.compose.material.ExperimentalMaterialApi
@@ -13,10 +15,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.campustrade.dtos.ProductObj
 import com.example.campustrade.repository.RepositoryFactory
 import com.example.campustrade.repository.RepositoryInterface
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import java.util.*
 
 class PublishViewModel() : ViewModel() {
@@ -88,6 +87,9 @@ class PublishViewModel() : ViewModel() {
     private val _message = MutableLiveData<String>("")
     val message: LiveData<String> = _message
 
+    //Bitmap for image
+    private var bitmapImage: Bitmap? = null
+
 
     //Atributo del state
     @OptIn(ExperimentalMaterialApi::class)
@@ -131,9 +133,24 @@ class PublishViewModel() : ViewModel() {
         _expanded.value = pExpanded
     }
 
-    fun onChangeImage(pContentImage: Uri?) {
+    fun onChangeImage(pContentImage: Uri?, context: Context) {
+        bitmapImage = null
         _contentImage.value = pContentImage
+        viewModelScope.launch { transformImage(pContentImage, context) }
     }
+
+    private suspend fun transformImage(pContentImage: Uri?, context: Context) {
+        val scope = CoroutineScope(Dispatchers.IO)
+        scope.launch {
+            async {
+                val inputStream = context.contentResolver.openInputStream(pContentImage!!)
+                bitmapImage = BitmapFactory.decodeStream(inputStream)
+            }
+
+        }
+
+    }
+
 
     fun onChangeIsLoading(pLoading: Boolean) {
         _isLoading.value = pLoading
@@ -149,10 +166,10 @@ class PublishViewModel() : ViewModel() {
         }
     }
 
-    fun onUploadProduct(productObj: ProductObj, bitmp: Bitmap) {
+    fun onUploadProduct(productObj: ProductObj) {
         viewModelScope.launch {
             if (_networkState.value!!) {
-                val objImg: ProductObj = repository.uploadImageToDataBase(productObj, bitmp)
+                val objImg: ProductObj = repository.uploadImageToDataBase(productObj, bitmapImage!!)
                 if (objImg.image != " ") {
                     _prodUpl.value = repository.uploadProductToDB(objImg)
                     _message.value = "Product uploaded successfully to DB"
@@ -183,8 +200,7 @@ class PublishViewModel() : ViewModel() {
         if (!pIsConnected && _isLoading.value == true) {
             _message.postValue("No internet connection, product will be uploaded when connection returns if app is still running.")
             _connectDialg.postValue(true)
-        }
-        else{
+        } else {
             _message.postValue("No internet connection, connect and try again.")
             _connectDialg.postValue(true)
         }

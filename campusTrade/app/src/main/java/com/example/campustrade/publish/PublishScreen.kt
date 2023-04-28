@@ -147,7 +147,6 @@ fun SuccesfullUploadDialog(viewModel: PublishViewModel) {
             //Clear output
             viewModel.onPublishChanged(" ", " ", " ", " ", " ")
             viewModel.onChangeComboBox(" ", viewModel.expanded.value!!)
-            viewModel.onChangeImage(null)
             viewModel.onActivateButton(false)
         } else {
             SimpleAlertDialog(
@@ -216,7 +215,7 @@ fun TopView(
 
     if (uris != null) {
         imageUri = uris
-        viewModel.onChangeImage(imageUri)
+        viewModel.onChangeImage(imageUri,context)
     }
 
     Row(modifier = Modifier.padding(16.dp)) {
@@ -471,14 +470,9 @@ fun bottomView(viewModel: PublishViewModel) {
                     )
                     Toast.makeText(context, "Publishing...", Toast.LENGTH_LONG).show()
 
-                    //Transform to bitmap
-                    val inputStream =
-                        context.contentResolver.openInputStream(viewModel.contentImage.value!!)
-                    val bitmp: Bitmap = BitmapFactory.decodeStream(inputStream)
-
                     //Upload product
                     viewModel.onChangeIsLoading(true)
-                    viewModel.onUploadProduct(productOb, bitmp)
+                    viewModel.onUploadProduct(productOb)
 
                 } catch (e: Exception) {
                     Log.d(TAG, e.message.toString())
@@ -513,7 +507,7 @@ fun selectableWindow(
     //Window that allows photos to be picked from the gallery
     val pickMedia =
         rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-            viewModel.onChangeImage(uri)
+            viewModel.onChangeImage(uri,context)
         }
 
     BottomActionSheet(state = state, scope = scope,
