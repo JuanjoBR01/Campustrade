@@ -7,23 +7,31 @@ import android.net.Uri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.campustrade.data.Resource
+import com.example.campustrade.objects.FirebaseClient
+import com.example.campustrade.repository.AuthRepository
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.io.ByteArrayOutputStream
 import java.util.*
+import javax.inject.Inject
+import com.example.campustrade.signup.SignUpRepository
 
-
-class SignUpViewModel(private val repository: SignUpRepository): ViewModel() {
+@HiltViewModel
+class SignUpViewModel @Inject constructor(
+    private val repository: AuthRepository
+    ):
+    ViewModel() {
 
     private val _expanded = MutableLiveData<Boolean>()
     val expanded: LiveData<Boolean> = _expanded
-
-    //private val _mTextFieldSize = MutableLiveData<Size>()
-    //val mTextFieldSize: LiveData<Size> = _mTextFieldSize
-
-    val prodType = arrayOf("Material", "Product", "Accessory", "Other")
 
     private val _valueType = MutableLiveData<String>()
     val valueType: LiveData<String> = _valueType
@@ -39,6 +47,13 @@ class SignUpViewModel(private val repository: SignUpRepository): ViewModel() {
 
     private val _confirmPassword = MutableLiveData<String>()
     val confirmPassword: LiveData<String> = _confirmPassword
+
+    private val _signUpFlow = MutableStateFlow<Resource<FirebaseUser>?>(null)
+    val signUpFlow: StateFlow<Resource<FirebaseUser>?> = _signUpFlow
+
+    private val creationRepository = SignUpRepository(FirebaseClient.fireStore)
+
+
 
     fun onExpandedChange() {
         _expanded.value = _expanded.value != true
@@ -68,45 +83,41 @@ class SignUpViewModel(private val repository: SignUpRepository): ViewModel() {
         _confirmPassword.value = cpw
     }
 
-    fun createUser(vt: String, nn: String, em: String, pw: String, imgUrl: String): Boolean {
-        var aux = true
-        runBlocking {
-            launch {
-                aux = repository.createUser(vt, nn, em, pw, imgUrl)
-            }
-        }
+    init {
 
-        return aux
+    }
+    private fun signup(nn: String, em: String, pw: String) = viewModelScope.launch {
+        _signUpFlow.value = Resource.Loading
+        val result = repository.signup(nn, em, pw)
+        _signUpFlow.value = result
     }
 
-    fun uploadImage(context: Context, contentImage: Uri?, viewModel: SignUpViewModel, vt: String, nn: String, em: String, pw: String): Boolean {
-        val storageRef = Firebase.storage.reference
+    private fun createUser(vt: String, nn: String, em: String, pw: String, imgUrl: String) = viewModelScope.launch {
+        creationRepository.createUser(vt, nn, em, pw, imgUrl)
 
+    }
+
+    fun uploadImage(context: Context, contentImage: Uri?, vt: String, nn: String, em: String, pw: String) = viewModelScope.launch {
+        val storageRef = Firebase.storage.reference
         //Transform to bitmap
         val inputStream = context.contentResolver.openInputStream(contentImage!!)
         val bitmp: Bitmap = BitmapFactory.decodeStream(inputStream)
-
         //Bitmap to bytes
         val outputStream = ByteArrayOutputStream()
         bitmp.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
         val bytes = outputStream.toByteArray()
-
         //Create variable to store url
         var imgUrl = ""
-        var aux = true
-
         //Upload to DB
         val storeR = storageRef.child("images/${UUID.randomUUID()}")
         val uploadTask = storeR.putBytes(bytes)
-
         uploadTask.addOnSuccessListener { taskSnapshot ->
             storeR.downloadUrl.addOnSuccessListener { uri ->
                 imgUrl = uri.toString()
-
-                aux = viewModel.createUser(vt, nn, em, pw, imgUrl)
+                createUser(vt, nn, em, pw, imgUrl)
+                signup(nn, em, pw)
             }
         }
-        return aux
     }
 
     fun restartForm() {

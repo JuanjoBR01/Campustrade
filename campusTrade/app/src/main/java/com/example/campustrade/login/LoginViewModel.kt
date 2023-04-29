@@ -1,5 +1,8 @@
 package com.example.campustrade.login
 
+import android.content.Context
+import android.net.*
+import android.os.Build
 import android.util.Patterns
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -11,12 +14,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import com.example.campustrade.data.Resource
-import com.google.firebase.ktx.Firebase
+import com.example.campustrade.repository.AuthRepository
 import kotlinx.coroutines.flow.StateFlow
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val repository: AuthRepository):
+    private val repository: AuthRepository
+):
     ViewModel(){
 
     private val _email = MutableLiveData<String>()
@@ -34,6 +38,15 @@ class LoginViewModel @Inject constructor(
     private val _loginFlow = MutableStateFlow<Resource<FirebaseUser>?>(null)
     val loginFlow: StateFlow<Resource<FirebaseUser>?> = _loginFlow
 
+    private val _networkState = MutableLiveData<Boolean>(true)
+    val networkState: LiveData<Boolean> = _networkState
+
+    private val _connectDialg = MutableLiveData<Boolean>(false)
+    val connectDialg: LiveData<Boolean> = _connectDialg
+
+    private val _message = MutableLiveData<String>("")
+    val message: LiveData<String> = _message
+
     val currentUser: FirebaseUser?
         get() = repository.currentUser
 
@@ -44,26 +57,13 @@ class LoginViewModel @Inject constructor(
         _loginFlow.value = Resource.PastFailure
     }
 
+    fun changeButtonState(state: Boolean) {
+        _loginEnable.value = state
+    }
+
     private fun isValidEmail(email: String): Boolean = Patterns.EMAIL_ADDRESS.matcher(email).matches()
 
     private fun isValidPassword(password: String): Boolean = password.length > 6
-
-    fun onLoginSelected(email: String, password: String): Boolean{
-
-        //runBlocking {
-        //    launch {
-        //        repository.makeLogin(email, password)
-        //        loginSuccessful = repository.successfulLogin.value
-        //    }
-//
-  //      }
-
-        //return loginSuccessful == true
-        return true
-
-    }
-
-
 
     init {
         logOut()
@@ -83,8 +83,22 @@ class LoginViewModel @Inject constructor(
 
     }
 
+    fun onNetworkStateChanged(pIsConnected: Boolean) {
+        _networkState.postValue(pIsConnected)
+        if (!pIsConnected) {
+            _message.postValue("No internet connection, connect and try again.")
+            _connectDialg.postValue(true)
+        } else {
+            _message.postValue("Connected.")
+            _connectDialg.postValue(false)
+
+        }
+    }
+
     fun logOut() {
         repository.logout()
         _loginFlow.value = null
     }
+
+
 }

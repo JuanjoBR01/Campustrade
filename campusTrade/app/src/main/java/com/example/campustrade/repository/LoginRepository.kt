@@ -5,7 +5,6 @@ import android.util.Log
 import com.example.campustrade.FirebaseClient
 import com.example.campustrade.ProductDB
 import com.example.campustrade.dtos.ProductObj
-import com.example.campustrade.login.LoginRepositoryInterface
 
 class LoginRepository: RepositoryInterface {
 

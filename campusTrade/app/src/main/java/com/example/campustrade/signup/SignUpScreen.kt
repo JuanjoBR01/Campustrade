@@ -26,9 +26,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.VisualTransformation
 import com.example.campustrade.ui.theme.CampustradeTheme
@@ -38,12 +36,19 @@ import com.example.campustrade.ui.theme.white
 import java.text.SimpleDateFormat
 import android.content.Context
 import android.os.Environment
+import androidx.activity.viewModels
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
 import androidx.core.content.FileProvider
 import coil.compose.rememberAsyncImagePainter
+import com.example.campustrade.FirebaseClient
 import com.example.campustrade.R
+import com.example.campustrade.data.Resource
+import com.example.campustrade.home.HomeActivityMVVM
 import com.example.campustrade.login.LoginScreen
+import com.example.campustrade.login.LoginViewModel
+import com.example.campustrade.repository.AuthenticationRepository
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.io.File
@@ -53,11 +58,13 @@ import java.util.UUID.*
 
 class SignUpScreen : ComponentActivity() {
 
+    //private val viewModel by viewModels<SignUpViewModel>()
+    private val viewModel = SignUpViewModel(AuthenticationRepository(FirebaseAuth.getInstance()))
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             CampustradeTheme {
-                SignUpScreenComposable(viewModel = SignUpViewModel(SignUpRepository()))
+                SignUpScreenComposable(viewModel = viewModel)
             }
         }
     }
@@ -79,9 +86,8 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier, viewModel: SignUpViewM
 
     val context = LocalContext.current
 
-    val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-    val currentDate = Date()
-    val publishDat = dateFormat.format(currentDate)
+    val signUpFlow = viewModel?.signUpFlow?.collectAsState()
+
 
 
     var contentImage = remember{
@@ -140,7 +146,6 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier, viewModel: SignUpViewM
                 .background(Color(0xFFFB8500))
                 .height(120.dp)
                 .width(120.dp)
-                .clip(RoundedCornerShape(20.dp))
         ) {
             PhotoView2(imagePath = contentImage.value, scope = scope, state = state)
         }
@@ -246,7 +251,6 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier, viewModel: SignUpViewM
 
         Button(
             onClick = {
-                var aux: Boolean
                 var mes: String
                 if (secretField.length < 6 || confirmSecretField.length < 6) {
                     mes = "The password needs at least 6 characters"
@@ -259,23 +263,21 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier, viewModel: SignUpViewM
                 } else if (contentImage.value == null){
                     mes = "Please take a photo"
                 } else {
+                    mes = "Uploading info..."
+                    viewModel?.uploadImage(context, contentImage.value, valueType, nameField, emailField, secretField)
 
-                    aux = uploadImageToDB(context, contentImage.value, viewModel,
-                        valueType, nameField, emailField, secretField)
-                    mes = if (aux) {
-                        "User created in Auth system and FireStore DB"
-                    } else {
-                        "Failed to create user in the DB"
-                    }
 
                     viewModel.restartForm()
                 }
 
+
                 Toast.makeText(
                     context,
                     mes,
-                    Toast.LENGTH_LONG
+                    Toast.LENGTH_SHORT
                 ).show()
+
+
 
                 },
             colors = ButtonDefaults.buttonColors(
@@ -313,9 +315,28 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier, viewModel: SignUpViewM
                 }
 
             }
-        )
-        {
+        ) { }
 
+        signUpFlow?.value?.let {
+            when(it) {
+                is Resource.Failure ->{
+                    val context = LocalContext.current
+                    Toast.makeText(context, it.exception.message, Toast.LENGTH_SHORT).show()
+                }
+                is Resource.Loading -> {
+                    CircularProgressIndicator(Modifier.align(Alignment.CenterHorizontally))
+
+                }
+                is Resource.Success -> {
+                    LaunchedEffect(Unit) {
+                        val intent = Intent(context, HomeActivityMVVM::class.java)
+                        context.startActivity(intent)
+                    }
+                }
+                Resource.PastFailure -> {
+                    println("Just failed")
+                }
+            }
         }
 
 
@@ -347,18 +368,6 @@ fun createImageFile2(context:Context): File {
     val storageDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
     return File.createTempFile("temp_image",".jpg",storageDir)
 }
-
-
-fun uploadImageToDB(context: Context, contentImage: Uri?, viewModel: SignUpViewModel, vt: String, nn: String, em: String, pw: String): Boolean {
-    // create the storage reference
-    var aux = true
-    aux = viewModel.uploadImage(context, contentImage, viewModel, vt, nn, em, pw)
-
-    return aux
-
-
-}
-
 
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -453,7 +462,7 @@ private fun BottomActionItem2(modifier: Modifier = Modifier, title:String, resou
 
 
 
-
+/*
 @Preview
 @Composable
 fun SignUpScreenPreview() {
@@ -461,3 +470,4 @@ fun SignUpScreenPreview() {
         SignUpScreenComposable(viewModel = SignUpViewModel(SignUpRepository()))
     }
 }
+*/

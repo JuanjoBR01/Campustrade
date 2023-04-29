@@ -1,9 +1,9 @@
 package com.example.campustrade.login
 
+
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,7 +23,6 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.viewModels
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.platform.LocalContext
 import com.example.campustrade.home.HomeActivityMVVM
@@ -34,13 +33,40 @@ import com.example.campustrade.ui.theme.darkBlue
 import com.example.campustrade.ui.theme.orange
 import com.example.campustrade.ui.theme.yellow
 import com.example.campustrade.data.Resource
-import org.intellij.lang.annotations.JdkConstants.HorizontalAlignment
+import com.example.campustrade.repository.AuthenticationRepository
+import com.google.firebase.auth.FirebaseAuth
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import android.os.Build
+import android.net.Network
 
 
 class LoginScreen : ComponentActivity() {
-    private val viewModel by viewModels<LoginViewModel>()
+    //private val viewModel by viewModels<LoginViewModel>()
+    private val viewModel = LoginViewModel(AuthenticationRepository(FirebaseAuth.getInstance()))
+
+
+    private val connectivityManager by lazy {
+        getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val networkCallback = object : ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: Network) {
+                viewModel.onNetworkStateChanged(true)
+            }
+
+            override fun onLost(network: Network) {
+                viewModel.onNetworkStateChanged(false)
+            }
+        }
+        connectivityManager.registerDefaultNetworkCallback(networkCallback)
+
+
+
         setContent {
             CampustradeTheme{
                 LoginScreenComposable(viewModel = viewModel)
@@ -63,6 +89,8 @@ fun LoginScreenComposable(modifier: Modifier = Modifier, viewModel: LoginViewMod
 
 
     val context = LocalContext.current
+
+    noInternetDialog(viewModel, context)
 
     Column (
         verticalArrangement = Arrangement.Center,
@@ -132,27 +160,6 @@ fun LoginScreenComposable(modifier: Modifier = Modifier, viewModel: LoginViewMod
         Button(
             onClick = {
                       viewModel?.login(emailField, passwordField)
-
-                /*
-                var aux = viewModel.onLoginSelected(emailField, passwordField)
-
-                if (aux) {
-                    Toast.makeText(
-                        context,
-                        "Login successful",
-                        Toast.LENGTH_LONG
-                    ).show()
-                    val intent = Intent(context, HomeActivityMVVM::class.java)
-                    context.startActivity(intent)
-                } else {
-                    Toast.makeText(
-                        context,
-                        "There was a problem logging you in.",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-
-                 */
             },
             colors = ButtonDefaults.buttonColors(
                 backgroundColor = orange,
@@ -224,7 +231,6 @@ fun LoginScreenComposable(modifier: Modifier = Modifier, viewModel: LoginViewMod
                 Resource.PastFailure -> {
                     println("Just failed")
                 }
-
             }
         }
 
@@ -232,13 +238,37 @@ fun LoginScreenComposable(modifier: Modifier = Modifier, viewModel: LoginViewMod
 
 }
 
-
-/*
-@Preview
 @Composable
-fun LoginScreenPreview() {
-    CampustradeTheme {
-        LoginScreenComposable(viewModel = LoginViewModel(LoginRepository()))
+fun noInternetDialog(viewModel:LoginViewModel, context: Context) {
+    val isConnected: Boolean by viewModel.networkState.observeAsState(initial = false)
+
+    if (!isConnected) {
+        AlertDialog(
+            onDismissRequest = {},
+            title = { Text("No Internet Connection") },
+            text = { Text(viewModel.message.value!!) },
+            confirmButton = {},
+            dismissButton = {}
+        )
+        viewModel.changeButtonState(false)
+    }
+    else{
+        viewModel.changeButtonState(true)
+    }
+
+}
+
+fun isNetworkConnected(context: Context): Boolean {
+    val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        val network = connectivityManager.activeNetwork ?: return false
+        val networkCapabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+        return networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+                networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
+                networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
+    } else {
+        val networkInfo = connectivityManager.activeNetworkInfo ?: return false
+        return networkInfo.isConnected
     }
 }
-*/

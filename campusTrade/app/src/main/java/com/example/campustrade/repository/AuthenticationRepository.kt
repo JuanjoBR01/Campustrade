@@ -1,4 +1,4 @@
-package com.example.campustrade.login
+package com.example.campustrade.repository
 
 import com.example.campustrade.data.Resource
 import com.example.campustrade.data.utils.await

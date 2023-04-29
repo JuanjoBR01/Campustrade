@@ -1,7 +1,7 @@
 package com.example.campustrade.di
 
-import com.example.campustrade.login.AuthRepository
-import com.example.campustrade.login.AuthenticationRepository
+import com.example.campustrade.repository.AuthRepository
+import com.example.campustrade.repository.AuthenticationRepository
 import com.google.firebase.auth.FirebaseAuth
 import dagger.Module
 import dagger.Provides
