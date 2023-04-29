@@ -1,8 +1,10 @@
 package com.example.campustrade.publish
 
-import android.content.ContentValues
+import android.content.ContentResolver
 import android.content.ContentValues.TAG
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
@@ -10,54 +12,55 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.toSize
 import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
+import com.example.campustrade.HomeActivity
+import com.example.campustrade.R
+import com.example.campustrade.cameraPublish.LaunchCameraScreen
+import com.example.campustrade.dtos.ProductObj
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
 import java.util.*
 import java.util.UUID.*
-import java.text.SimpleDateFormat
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
-import com.example.campustrade.HomeActivity
-import com.example.campustrade.LaunchCameraScreen
-import com.example.campustrade.R
-import com.example.campustrade.dtos.ProductObj
+import androidx.compose.runtime.livedata.observeAsState as observeAsState
 
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun PublishScreenV(uris: Uri?, viewModel: PublishViewModel) {
+
     //Atributo Scope
     val scope: CoroutineScope by viewModel.scope.observeAsState(initial = rememberCoroutineScope())
 
@@ -70,6 +73,12 @@ fun PublishScreenV(uris: Uri?, viewModel: PublishViewModel) {
 
     //Pantalla de cargando datos
     val isLoading: Boolean by viewModel.isLoading.observeAsState(initial = false)
+
+    //Boton habilitado
+    val isAvailable: Boolean by viewModel.isAvailable.observeAsState(initial = false)
+
+    SuccesfullUploadDialog(viewModel)
+    noInternetDialog(viewModel)
 
     if (isLoading) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -96,6 +105,59 @@ fun PublishScreenV(uris: Uri?, viewModel: PublishViewModel) {
         selectableWindow(viewModel, scope, state)
     }
 }
+
+@Composable
+fun noInternetDialog(viewModel: PublishViewModel) {
+    //Conectado a internet
+    val isConnected: Boolean by viewModel.networkState.observeAsState(initial = false)
+
+    if (!isConnected) {
+        AlertDialog(
+            onDismissRequest = {},
+            title = { Text("No Internet Connection") },
+            text = { Text(viewModel.message.value!!) },
+            confirmButton = {},
+            dismissButton = {}
+        )
+        viewModel.onActivateButton(false)
+    }
+    else{
+        viewModel.onActivateButton(true)
+    }
+
+}
+
+
+@Composable
+fun SuccesfullUploadDialog(viewModel: PublishViewModel) {
+
+    //Mostrar dialogo de subido correctamente
+    val showDialog: Boolean by viewModel.prodDialg.observeAsState(initial = false)
+
+    //Subio producto
+    val uplProd: Boolean by viewModel.prodUpl.observeAsState(initial = false)
+
+    if (showDialog) {
+        if (uplProd) {
+            SimpleAlertDialog(
+                title = "Upload Product to DB",
+                message = viewModel.message.value!!,
+                onDismiss = { viewModel.onCloseDialog(false) }
+            )
+            //Clear output
+            viewModel.onPublishChanged(" ", " ", " ", " ", " ")
+            viewModel.onChangeComboBox(" ", viewModel.expanded.value!!)
+            viewModel.onActivateButton(false)
+        } else {
+            SimpleAlertDialog(
+                title = "Upload Product to DB",
+                message = viewModel.message.value!!,
+                onDismiss = { viewModel.onCloseDialog(false) }
+            )
+        }
+    }
+}
+
 
 @Composable
 fun TopBarPublishScreen() {
@@ -129,18 +191,32 @@ fun TopView(
     uris: Uri?,
     viewModel: PublishViewModel,
     scope: CoroutineScope,
-    state: ModalBottomSheetState
+    state: ModalBottomSheetState,
 ) {
+    //Contexto de la app
+    val context = LocalContext.current
+
     //Atributo nombre del producto a agregar
     val prodName: String by viewModel.prodName.observeAsState(initial = " ")
 
     //Atributo precio del producto a agregar
     val prodPrice: String by viewModel.prodPrice.observeAsState(initial = " ")
 
-    //Atributo de la imagen a mostrar
-    val contentImage: Uri? by viewModel.contentImage.observeAsState()
+    //Imagen principal
+    var imageUri: Uri? = Uri.parse(
+        ContentResolver.SCHEME_ANDROID_RESOURCE
+                + "://" + context.getResources().getResourcePackageName(R.drawable.camera)
+                + '/' + context.getResources().getResourceTypeName(R.drawable.camera)
+                + '/' + context.getResources().getResourceEntryName(R.drawable.camera)
+    )
 
-    viewModel.onChangeImage(uris)
+    //Atributo de la imagen a mostrar
+    val contentImage: Uri? by viewModel.contentImage.observeAsState(initial = imageUri)
+
+    if (uris != null) {
+        imageUri = uris
+        viewModel.onChangeImage(imageUri,context)
+    }
 
     Row(modifier = Modifier.padding(16.dp)) {
         Box(
@@ -151,7 +227,7 @@ fun TopView(
                 .clip(RoundedCornerShape(16.dp))
                 .border(1.dp, Color.Black, RoundedCornerShape(16.dp))
         ) {
-            PhotoView(imagePath = contentImage, scope = scope, state = state, viewModel = viewModel)
+            PhotoView(scope = scope, state = state, viewModel = viewModel, imageUr = contentImage)
         }
         Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp)) {
             OutlinedTextField(
@@ -380,10 +456,6 @@ fun bottomView(viewModel: PublishViewModel) {
         Button(
             onClick = {
                 try {
-                    Log.d(
-                        TAG,
-                        "PreProd----------------------------------------------------------------------------------------------"
-                    )
                     val productOb = ProductObj(
                         image = " ",
                         name = viewModel.prodName.value!!,
@@ -396,40 +468,24 @@ fun bottomView(viewModel: PublishViewModel) {
                         stock = 1,
                         technicalSpecs = "TS"
                     )
-                    Log.d(
-                        TAG,
-                        "PostProd----------------------------------------------------------------------------------------------"
-                    )
                     Toast.makeText(context, "Publishing...", Toast.LENGTH_LONG).show()
-                    Log.d(
-                        TAG,
-                        "PreUpload----------------------------------------------------------------------------------------------"
-                    )
-                    Log.d(TAG, viewModel.contentImage.value.toString())
+
+                    //Upload product
                     viewModel.onChangeIsLoading(true)
-                    viewModel.uploadImageToDataBase(context, productOb)
-                    //Clear output
-                    viewModel.onPublishChanged("", "", "", "", "Used")
-                    viewModel.onChangeComboBox("", viewModel.expanded.value!!)
-                    Log.d(ContentValues.TAG, "Clear output")
+                    viewModel.onUploadProduct(productOb)
+
                 } catch (e: Exception) {
-                    Log.d(
-                        TAG,
-                        "----------------------------------------------------------------------------------------------"
-                    )
-                    Log.d(TAG, e.toString())
                     Log.d(TAG, e.message.toString())
                     Toast.makeText(
                         context,
                         "Error While Trying upload. Please Try Again",
                         Toast.LENGTH_LONG
                     ).show()
-                    viewModel.onPublishChanged("", "", "", "", "Used")
-                    viewModel.onChangeComboBox("", viewModel.expanded.value!!)
-                    viewModel.onChangeImage(null)
+                    viewModel.onChangeIsLoading(false)
                 }
 
             },
+            enabled = viewModel.isAvailable.value!!,
             colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFFFB8500))
         ) {
             Text(text = "Publish")
@@ -451,13 +507,7 @@ fun selectableWindow(
     //Window that allows photos to be picked from the gallery
     val pickMedia =
         rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-            viewModel.onChangeImage(uri)
-            Log.d(TAG,viewModel.contentImage.value.toString())
-            val param1 = viewModel.contentImage.value
-            val intent = Intent(context, PublishScreen::class.java).apply {
-                putExtra("imgUris", param1.toString())
-            }
-            context.startActivity(intent)
+            viewModel.onChangeImage(uri,context)
         }
 
     BottomActionSheet(state = state, scope = scope,
@@ -482,33 +532,29 @@ fun selectableWindow(
 @Composable
 private fun PhotoView(
     modifier: Modifier = Modifier,
-    imagePath: Uri?,
     scope: CoroutineScope,
     state: ModalBottomSheetState,
-    viewModel: PublishViewModel
+    viewModel: PublishViewModel,
+    imageUr: Uri?
 ) {
     Image(
-        painter = if (viewModel.contentImage.value == null) {
-            painterResource(id = R.drawable.camera)
-        } else {
-            rememberAsyncImagePainter(
-                model = viewModel.contentImage.value,//ImageRequest.Builder(context = LocalContext.current)
-                //.crossfade(true).data(imagePath).build(),
-                filterQuality = FilterQuality.High
-            )
-        },
+        painter =
+        rememberAsyncImagePainter(
+            model = ImageRequest.Builder(context = LocalContext.current)
+                .crossfade(true).data(imageUr).build(),
+            filterQuality = FilterQuality.High
+        ),
         contentDescription = null,
         modifier = modifier
-            .height(148.dp)
-            .width(148.dp)
-            .padding(40.dp)
+            .height(150.dp)
+            .width(150.dp)
             .clickable {
                 scope.launch {
                     state.show()
                 }
             }
             .background(color = Color.Transparent),
-        contentScale = if (imagePath == null) {
+        contentScale = if (viewModel.contentImage.value == null) {
             ContentScale.Inside
         } else {
             ContentScale.FillWidth
@@ -610,7 +656,7 @@ private fun RadioButtonStyle(selectedItem: String, details: String) {
             .padding(horizontal = 8.dp, vertical = 8.dp)
             .height(35.dp)
     ) {
-        Row() {//modifier = Modifier.fillMaxWidth()) {
+        Row() {
             Column(
                 modifier = Modifier
                     .padding(start = 16.dp, top = 6.dp, bottom = 6.dp)
@@ -633,8 +679,28 @@ private fun RadioButtonStyle(selectedItem: String, details: String) {
     }
 }
 
+@Composable
+fun SimpleAlertDialog(
+    title: String,
+    message: String,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = title) },
+        text = { Text(text = message) },
+        confirmButton = {
+            Button(
+                onClick = onDismiss,
+                content = { Text(text = "OK") }
+            )
+        }
+    )
+}
+
+
 @Preview(showBackground = true)
 @Composable
 fun PreviewPublishScreen() {
-    PublishScreenV(null, PublishViewModel())
+    PublishScreen()
 }
