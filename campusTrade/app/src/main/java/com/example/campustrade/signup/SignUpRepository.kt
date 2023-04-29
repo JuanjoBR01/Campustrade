@@ -1,13 +1,13 @@
 package com.example.campustrade.signup
 
-import com.example.campustrade.FirebaseClient
+import com.example.campustrade.objects.FirebaseClient
 import com.example.campustrade.dtos.UserObj
 import com.google.firebase.firestore.CollectionReference
 
 class SignUpRepository: SignUpRepositoryInterface {
 
-    private val firebaseAuth = FirebaseClient().auth
-    private val firebaseFireStore = FirebaseClient().fireStore
+    private val firebaseAuth = FirebaseClient.auth
+    private val firebaseFireStore = FirebaseClient.fireStore
 
     override suspend fun createUser(vt: String, nn: String, em: String, pw: String, imgUrl: String): Boolean {
         var aux = true
