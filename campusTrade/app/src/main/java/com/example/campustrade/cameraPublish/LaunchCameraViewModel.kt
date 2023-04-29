@@ -1,4 +1,4 @@
-package com.example.campustrade
+package com.example.campustrade.cameraPublish
 
 import android.net.Uri
 import androidx.lifecycle.LiveData

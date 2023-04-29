@@ -5,6 +5,7 @@
 
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-feature android:name="android.hardware.camera.any" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
@@ -44,7 +45,7 @@
             android:label="@string/title_activity_home_mvvm"
             android:theme="@style/Theme.Campustrade" />
         <activity
-            android:name=".LaunchCameraScreen"
+            android:name=".cameraPublish.LaunchCameraScreen"
             android:screenOrientation="portrait"
             android:exported="false"
             android:label="LaunchCameraScreen"
