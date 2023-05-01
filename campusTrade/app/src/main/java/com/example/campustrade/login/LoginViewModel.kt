@@ -1,8 +1,5 @@
 package com.example.campustrade.login
 
-import android.content.Context
-import android.net.*
-import android.os.Build
 import android.util.Patterns
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -32,20 +29,11 @@ class LoginViewModel @Inject constructor(
     private val _loginEnable = MutableLiveData<Boolean>()
     val loginEnable: LiveData<Boolean> = _loginEnable
 
-    private val _signupEnable = MutableLiveData<Boolean>(true)
+    private val _signupEnable = MutableLiveData(true)
     val signupEnable: LiveData<Boolean> = _signupEnable
 
     private val _loginFlow = MutableStateFlow<Resource<FirebaseUser>?>(null)
     val loginFlow: StateFlow<Resource<FirebaseUser>?> = _loginFlow
-
-    private val _networkState = MutableLiveData<Boolean>(true)
-    val networkState: LiveData<Boolean> = _networkState
-
-    private val _connectDialg = MutableLiveData<Boolean>(false)
-    val connectDialg: LiveData<Boolean> = _connectDialg
-
-    private val _message = MutableLiveData<String>("")
-    val message: LiveData<String> = _message
 
     val currentUser: FirebaseUser?
         get() = repository.currentUser
@@ -55,10 +43,6 @@ class LoginViewModel @Inject constructor(
         _password.value = password
         _loginEnable.value = isValidEmail(email) && isValidPassword(password)
         _loginFlow.value = Resource.PastFailure
-    }
-
-    fun changeButtonState(state: Boolean) {
-        _loginEnable.value = state
     }
 
     private fun isValidEmail(email: String): Boolean = Patterns.EMAIL_ADDRESS.matcher(email).matches()
@@ -83,17 +67,6 @@ class LoginViewModel @Inject constructor(
 
     }
 
-    fun onNetworkStateChanged(pIsConnected: Boolean) {
-        _networkState.postValue(pIsConnected)
-        if (!pIsConnected) {
-            _message.postValue("No internet connection, connect and try again.")
-            _connectDialg.postValue(true)
-        } else {
-            _message.postValue("Connected.")
-            _connectDialg.postValue(false)
-
-        }
-    }
 
     fun logOut() {
         repository.logout()

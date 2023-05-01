@@ -18,11 +18,9 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import java.io.ByteArrayOutputStream
 import java.util.*
 import javax.inject.Inject
-import com.example.campustrade.signup.SignUpRepository
 
 @HiltViewModel
 class SignUpViewModel @Inject constructor(
@@ -107,7 +105,7 @@ class SignUpViewModel @Inject constructor(
         bitmp.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
         val bytes = outputStream.toByteArray()
         //Create variable to store url
-        var imgUrl = ""
+        var imgUrl: String
         //Upload to DB
         val storeR = storageRef.child("images/${UUID.randomUUID()}")
         val uploadTask = storeR.putBytes(bytes)

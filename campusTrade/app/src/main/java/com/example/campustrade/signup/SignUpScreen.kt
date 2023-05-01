@@ -13,7 +13,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.runtime.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.*
@@ -33,22 +32,18 @@ import com.example.campustrade.ui.theme.CampustradeTheme
 import com.example.campustrade.ui.theme.darkBlue
 import com.example.campustrade.ui.theme.orange
 import com.example.campustrade.ui.theme.white
-import java.text.SimpleDateFormat
 import android.content.Context
 import android.os.Environment
 import android.util.Log
-import androidx.activity.viewModels
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
 import androidx.core.content.FileProvider
 import coil.compose.rememberAsyncImagePainter
 import com.example.campustrade.ConnectivityReceiver
-import com.example.campustrade.FirebaseClient
 import com.example.campustrade.R
 import com.example.campustrade.data.Resource
 import com.example.campustrade.home.HomeActivityMVVM
 import com.example.campustrade.login.LoginScreen
-import com.example.campustrade.login.LoginViewModel
 import com.example.campustrade.repository.AuthenticationRepository
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
@@ -384,7 +379,6 @@ fun PhotoView2(modifier: Modifier = Modifier, imagePath:Uri?, scope: CoroutineSc
         else{
             rememberAsyncImagePainter(
                 model = imagePath,//ImageRequest.Builder(context = LocalContext.current)
-                //.crossfade(true).data(imagePath).build(),
                 filterQuality = FilterQuality.High
             )
         },
