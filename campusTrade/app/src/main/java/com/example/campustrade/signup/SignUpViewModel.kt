@@ -52,7 +52,6 @@ class SignUpViewModel @Inject constructor(
     private val creationRepository = SignUpRepository(FirebaseClient.fireStore)
 
 
-
     fun onExpandedChange() {
         _expanded.value = _expanded.value != true
     }
@@ -81,14 +80,6 @@ class SignUpViewModel @Inject constructor(
         _confirmPassword.value = cpw
     }
 
-    init {
-
-    }
-    private fun signup(nn: String, em: String, pw: String) = viewModelScope.launch {
-        _signUpFlow.value = Resource.Loading
-        val result = repository.signup(nn, em, pw)
-        _signUpFlow.value = result
-    }
 
     private fun createUser(vt: String, nn: String, em: String, pw: String, imgUrl: String) = viewModelScope.launch {
         creationRepository.createUser(vt, nn, em, pw, imgUrl)
@@ -96,6 +87,11 @@ class SignUpViewModel @Inject constructor(
     }
 
     fun uploadImage(context: Context, contentImage: Uri?, vt: String, nn: String, em: String, pw: String) = viewModelScope.launch {
+        _signUpFlow.value = Resource.Loading
+        val result = repository.signup(nn, em, pw)
+        repository.login(em, pw)
+        _signUpFlow.value = result
+
         val storageRef = Firebase.storage.reference
         //Transform to bitmap
         val inputStream = context.contentResolver.openInputStream(contentImage!!)
@@ -109,11 +105,11 @@ class SignUpViewModel @Inject constructor(
         //Upload to DB
         val storeR = storageRef.child("images/${UUID.randomUUID()}")
         val uploadTask = storeR.putBytes(bytes)
-        uploadTask.addOnSuccessListener { taskSnapshot ->
+        uploadTask.addOnSuccessListener {
             storeR.downloadUrl.addOnSuccessListener { uri ->
                 imgUrl = uri.toString()
                 createUser(vt, nn, em, pw, imgUrl)
-                signup(nn, em, pw)
+
             }
         }
     }

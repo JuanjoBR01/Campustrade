@@ -15,11 +15,6 @@ val InriaSans = FontFamily(
 )
 
 
-val Montserrat = FontFamily(
-    Font(R.font.montserrat_regular),
-    Font(R.font.montserrat_bold, FontWeight.Bold)
-)
-
 // Set of Material typography styles to start with
 val Typography = Typography(
     h1 = TextStyle(
@@ -41,6 +36,16 @@ val Typography = Typography(
         fontFamily = InriaSans,
         fontWeight = FontWeight.Normal,
         fontSize = 14.sp
+    ),
+    caption = TextStyle(
+        fontFamily = InriaSans,
+        fontWeight = FontWeight.Bold,
+        fontSize = 25.sp
+    ),
+    button = TextStyle(
+        fontFamily = InriaSans,
+        fontWeight = FontWeight.Bold,
+        fontSize = 20.sp
     )
 )
 /* Other default text styles to override

@@ -21,8 +21,10 @@
     <string name="person_icon">Person Icon</string>
     <string name="lock_icon">Lock Icon</string>
     <string name="log_in_button">LOG IN</string>
+    <string name="log_out_button">LOG OUT</string>
     <string name="sign_up_button">SIGN UP</string>
     <string name="sign_up_top_bar_text">Sign Up</string>
+    <string name="profile_top_bar_text">PROFILE</string>
     <string name="back_button">Back</string>
     <string name="add_a_photo_button">Add a Photo</string>
     <string name="name_sign_up_form">Name</string>
@@ -37,6 +39,7 @@
     <string name="try_again">Try Again</string>
     <string name="title_activity_home_mvvm">HomeActivityMVVM</string>
     <string name="title_activity_history">HistoryActivity</string>
+    <string name="title_activity_profile">ProfileActivity</string>
 
 
 </resources>

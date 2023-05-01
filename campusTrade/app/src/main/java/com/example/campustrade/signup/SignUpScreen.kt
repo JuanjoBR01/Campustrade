@@ -71,7 +71,6 @@ class SignUpScreen : ComponentActivity() {
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun SignUpScreenComposable(modifier: Modifier = Modifier, viewModel: SignUpViewModel) {
-    //var mTextFieldSize by remember { mutableStateOf(Size.Zero)}
     val prodType = arrayOf("Material", "Product", "Accessory", "Other")
 
     val expanded: Boolean by viewModel.expanded.observeAsState(initial = false)
@@ -271,7 +270,7 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier, viewModel: SignUpViewM
                 Toast.makeText(
                     context,
                     mes,
-                    Toast.LENGTH_SHORT
+                    Toast.LENGTH_LONG
                 ).show()
 
 
