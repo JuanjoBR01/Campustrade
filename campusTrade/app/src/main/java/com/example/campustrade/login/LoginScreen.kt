@@ -36,34 +36,18 @@ import com.example.campustrade.data.Resource
 import com.example.campustrade.repository.AuthenticationRepository
 import com.google.firebase.auth.FirebaseAuth
 import android.content.Context
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
-import android.os.Build
-import android.net.Network
+import android.util.Log
+import com.example.campustrade.ConnectivityReceiver
 
 
 class LoginScreen : ComponentActivity() {
     //private val viewModel by viewModels<LoginViewModel>()
     private val viewModel = LoginViewModel(AuthenticationRepository(FirebaseAuth.getInstance()))
 
-
-    private val connectivityManager by lazy {
-        getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val networkCallback = object : ConnectivityManager.NetworkCallback() {
-            override fun onAvailable(network: Network) {
-                viewModel.onNetworkStateChanged(true)
-            }
 
-            override fun onLost(network: Network) {
-                viewModel.onNetworkStateChanged(false)
-            }
-        }
-        connectivityManager.registerDefaultNetworkCallback(networkCallback)
 
 
 
@@ -84,13 +68,10 @@ fun LoginScreenComposable(modifier: Modifier = Modifier, viewModel: LoginViewMod
     val passwordField: String by viewModel.password.observeAsState(initial = "")
     val loginEnable: Boolean by viewModel.loginEnable.observeAsState(initial = false)
     val signupEnabled: Boolean by viewModel.signupEnable.observeAsState(initial = true)
-
-    val loginFlow = viewModel?.loginFlow?.collectAsState()
-
+    val loginFlow = viewModel.loginFlow.collectAsState()
 
     val context = LocalContext.current
 
-    noInternetDialog(viewModel, context)
 
     Column (
         verticalArrangement = Arrangement.Center,
@@ -159,7 +140,7 @@ fun LoginScreenComposable(modifier: Modifier = Modifier, viewModel: LoginViewMod
 
         Button(
             onClick = {
-                      viewModel?.login(emailField, passwordField)
+                      viewModel.login(emailField, passwordField)
             },
             colors = ButtonDefaults.buttonColors(
                 backgroundColor = orange,
@@ -212,7 +193,9 @@ fun LoginScreenComposable(modifier: Modifier = Modifier, viewModel: LoginViewMod
 
             )
 
-        loginFlow?.value?.let {
+        NoInternetDialog(context = context)
+
+        loginFlow.value?.let {
             when(it) {
                 is Resource.Failure ->{
                     val context = LocalContext.current
@@ -239,36 +222,24 @@ fun LoginScreenComposable(modifier: Modifier = Modifier, viewModel: LoginViewMod
 }
 
 @Composable
-fun noInternetDialog(viewModel:LoginViewModel, context: Context) {
-    val isConnected: Boolean by viewModel.networkState.observeAsState(initial = false)
+fun NoInternetDialog(context: Context) {
+    val connectivityReceiver = remember { ConnectivityReceiver(context = context) }
+    connectivityReceiver.register()
 
-    if (!isConnected) {
+    if (!connectivityReceiver.isOnline) {
         AlertDialog(
             onDismissRequest = {},
-            title = { Text("No Internet Connection") },
-            text = { Text(viewModel.message.value!!) },
+            title = { Text("Disconnected!") },
+            text = { Text("Oops! You aren't connected to internet, so we won't be able to process you login request :(") },
             confirmButton = {},
             dismissButton = {}
         )
-        viewModel.changeButtonState(false)
-    }
-    else{
-        viewModel.changeButtonState(true)
+        Log.d("ConnectionEvent", "Houston, we lost connectivity")
     }
 
-}
-
-fun isNetworkConnected(context: Context): Boolean {
-    val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-        val network = connectivityManager.activeNetwork ?: return false
-        val networkCapabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
-        return networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
-                networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
-                networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
-    } else {
-        val networkInfo = connectivityManager.activeNetworkInfo ?: return false
-        return networkInfo.isConnected
+    DisposableEffect(key1 = connectivityReceiver) {
+        onDispose {
+            connectivityReceiver.unregister()
+        }
     }
 }

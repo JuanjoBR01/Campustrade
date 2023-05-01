@@ -36,11 +36,13 @@ import com.example.campustrade.ui.theme.white
 import java.text.SimpleDateFormat
 import android.content.Context
 import android.os.Environment
+import android.util.Log
 import androidx.activity.viewModels
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
 import androidx.core.content.FileProvider
 import coil.compose.rememberAsyncImagePainter
+import com.example.campustrade.ConnectivityReceiver
 import com.example.campustrade.FirebaseClient
 import com.example.campustrade.R
 import com.example.campustrade.data.Resource
@@ -317,6 +319,8 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier, viewModel: SignUpViewM
             }
         ) { }
 
+        NoInternetDialog(context)
+
         signUpFlow?.value?.let {
             when(it) {
                 is Resource.Failure ->{
@@ -461,13 +465,25 @@ private fun BottomActionItem2(modifier: Modifier = Modifier, title:String, resou
 }
 
 
-
-/*
-@Preview
 @Composable
-fun SignUpScreenPreview() {
-    CampustradeTheme {
-        SignUpScreenComposable(viewModel = SignUpViewModel(SignUpRepository()))
+fun NoInternetDialog(context: Context) {
+    val connectivityReceiver = remember { ConnectivityReceiver(context = context) }
+    connectivityReceiver.register()
+
+    if (!connectivityReceiver.isOnline) {
+        AlertDialog(
+            onDismissRequest = {},
+            title = { Text("Disconnected!") },
+            text = { Text("Oops! You aren't connected to internet, so we won't be able to process you signup request :(") },
+            confirmButton = {},
+            dismissButton = {}
+        )
+        Log.d("ConnectionEvent", "Houston, we lost connectivity")
+    }
+
+    DisposableEffect(key1 = connectivityReceiver) {
+        onDispose {
+            connectivityReceiver.unregister()
+        }
     }
 }
-*/
