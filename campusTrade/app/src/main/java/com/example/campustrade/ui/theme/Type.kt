@@ -37,12 +37,12 @@ val Typography = Typography(
         fontWeight = FontWeight.Normal,
         fontSize = 14.sp
     ),
-    caption = TextStyle(
+    h4 = TextStyle(
         fontFamily = InriaSans,
         fontWeight = FontWeight.Bold,
         fontSize = 25.sp
     ),
-    button = TextStyle(
+    h5 = TextStyle(
         fontFamily = InriaSans,
         fontWeight = FontWeight.Bold,
         fontSize = 20.sp

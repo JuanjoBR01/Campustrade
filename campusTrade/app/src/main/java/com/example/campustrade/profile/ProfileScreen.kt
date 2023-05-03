@@ -120,14 +120,14 @@ fun ProfileScreenComposable(modifier: Modifier = Modifier) {
                     .align(CenterVertically)
                 ){
                 Text(text = if (nameField.length > 20) nameField.substring(0,17) + "..." else nameField,
-                    style = MaterialTheme.typography.caption,
+                    style = MaterialTheme.typography.h4,
                     modifier = Modifier.align(CenterHorizontally)
                 )
 
                 Spacer(modifier = Modifier.height(10.dp))
 
                 Text(text = if (emailField.substring(0,emailField.indexOf("@")).length > 20) emailField.substring(0,17) + "..." else emailField.substring(0,emailField.indexOf("@")),
-                    style = MaterialTheme.typography.button,
+                    style = MaterialTheme.typography.h5,
                     modifier = Modifier.align(CenterHorizontally)
                 )
 
@@ -149,7 +149,7 @@ fun ProfileScreenComposable(modifier: Modifier = Modifier) {
         ) {
 
             Text(text = "Settings",
-                style = MaterialTheme.typography.caption,
+                style = MaterialTheme.typography.h4,
                 modifier = Modifier.align(Start)
             )
 
@@ -163,7 +163,7 @@ fun ProfileScreenComposable(modifier: Modifier = Modifier) {
                     .fillMaxWidth()
             ) {
                 Text(text = "Notifications",
-                    style = MaterialTheme.typography.button,
+                    style = MaterialTheme.typography.h5,
                     modifier = modifier.weight(1f)
                 )
 
@@ -188,7 +188,7 @@ fun ProfileScreenComposable(modifier: Modifier = Modifier) {
                     .fillMaxWidth()
             ) {
                 Text(text = "Security options",
-                    style = MaterialTheme.typography.button,
+                    style = MaterialTheme.typography.h5,
                     modifier = modifier.weight(1f)
                 )
 
@@ -214,7 +214,7 @@ fun ProfileScreenComposable(modifier: Modifier = Modifier) {
                     .fillMaxWidth()
             ) {
                 Text(text = "About Campustrade",
-                    style = MaterialTheme.typography.button,
+                    style = MaterialTheme.typography.h5,
                     modifier = modifier.weight(1f)
                 )
 
@@ -250,25 +250,43 @@ fun ProfileScreenComposable(modifier: Modifier = Modifier) {
 
             Text(text = "About you",
                 style = MaterialTheme.typography.caption,
-                modifier = Modifier.align(Start)
+                modifier = Modifier
+                    .align(Start)
                     .padding(start = 5.dp, end = 10.dp)
             )
 
             Spacer(modifier = Modifier.height(15.dp))
 
-            Text(text = "Your tags: Accessory",
-                style = MaterialTheme.typography.button,
-                modifier = Modifier.align(Start)
-                    .padding(start = 25.dp, end = 10.dp)
-            )
+            Row {
+                Text(text = "Your tag:  ",
+                    style = MaterialTheme.typography.h5,
+                    modifier = Modifier
+                        .padding(start = 25.dp, end = 10.dp)
+                )
+
+                Text(text = "Accessory",
+                    style = MaterialTheme.typography.h5,
+                    modifier = Modifier
+                        .padding(start = 25.dp, end = 10.dp)
+                )
+            }
 
             Spacer(modifier = Modifier.height(15.dp))
 
-            Text(text = "Last login: 01/05/2023",
-                style = MaterialTheme.typography.button,
-                modifier = Modifier.align(Start)
-                    .padding(start = 25.dp, end = 10.dp)
-            )
+            Row {
+                Text(text = "Last login:  ",
+                    style = MaterialTheme.typography.h5,
+                    modifier = Modifier
+                        .padding(start = 25.dp, end = 10.dp)
+                )
+
+                Text(text = "01/05/2023",
+                    style = MaterialTheme.typography.h5,
+                    modifier = Modifier
+                        .padding(start = 25.dp, end = 10.dp)
+                )
+            }
+
 
             Spacer(modifier = Modifier.height(30.dp))
 
@@ -279,7 +297,9 @@ fun ProfileScreenComposable(modifier: Modifier = Modifier) {
                     backgroundColor = orange,
                     disabledBackgroundColor = Color(0xFF535D64)
                 ),
-                modifier = Modifier.width(200.dp).align(CenterHorizontally),
+                modifier = Modifier
+                    .width(200.dp)
+                    .align(CenterHorizontally),
                 elevation = ButtonDefaults.elevation(
                     defaultElevation = 6.dp,
                     pressedElevation = 8.dp,
