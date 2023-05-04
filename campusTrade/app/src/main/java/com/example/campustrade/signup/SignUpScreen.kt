@@ -35,6 +35,7 @@ import com.example.campustrade.ui.theme.white
 import android.content.Context
 import android.os.Environment
 import android.util.Log
+import androidx.activity.viewModels
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
 import androidx.core.content.FileProvider
@@ -42,6 +43,7 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.campustrade.ConnectivityReceiver
 import com.example.campustrade.R
 import com.example.campustrade.data.Resource
+import com.example.campustrade.data.database.daos.UserDao
 import com.example.campustrade.home.HomeActivityMVVM
 import com.example.campustrade.login.LoginScreen
 import com.example.campustrade.repository.AuthenticationRepository

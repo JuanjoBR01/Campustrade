@@ -36,14 +36,17 @@ import com.example.campustrade.data.Resource
 import com.example.campustrade.repository.AuthenticationRepository
 import com.google.firebase.auth.FirebaseAuth
 import android.content.Context
+import android.os.Build
 import android.util.Log
+import androidx.activity.viewModels
+import androidx.annotation.RequiresApi
 import com.example.campustrade.ConnectivityReceiver
-
 
 class LoginScreen : ComponentActivity() {
     //private val viewModel by viewModels<LoginViewModel>()
     private val viewModel = LoginViewModel(AuthenticationRepository(FirebaseAuth.getInstance()))
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -57,6 +60,7 @@ class LoginScreen : ComponentActivity() {
 
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun LoginScreenComposable(modifier: Modifier = Modifier, viewModel: LoginViewModel) {
 

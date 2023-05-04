@@ -35,7 +35,9 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Alignment.Companion.Start
+import com.example.campustrade.objects.CurrentUser
 import com.example.campustrade.ui.theme.orange
+import org.checkerframework.checker.units.qual.Current
 
 
 class ProfileScreen : ComponentActivity() {
@@ -55,8 +57,11 @@ class ProfileScreen : ComponentActivity() {
 fun ProfileScreenComposable(modifier: Modifier = Modifier) {
 
     val context = LocalContext.current
-    val nameField by remember { mutableStateOf("Lionel Messi")    }
-    val emailField by remember { mutableStateOf("l.messi@uniandes.edu.co")    }
+    //val nameField by remember { mutableStateOf("Lionel Messi")    }
+    //val emailField by remember { mutableStateOf("l.messi@uniandes.edu.co")    }
+
+    val nameField = CurrentUser.user!!.name
+    val emailField = CurrentUser.user!!.email
 
 
 
@@ -249,7 +254,7 @@ fun ProfileScreenComposable(modifier: Modifier = Modifier) {
         ) {
 
             Text(text = "About you",
-                style = MaterialTheme.typography.caption,
+                style = MaterialTheme.typography.h5,
                 modifier = Modifier
                     .align(Start)
                     .padding(start = 5.dp, end = 10.dp)
@@ -264,7 +269,7 @@ fun ProfileScreenComposable(modifier: Modifier = Modifier) {
                         .padding(start = 25.dp, end = 10.dp)
                 )
 
-                Text(text = "Accessory",
+                Text(text = CurrentUser.user!!.tag,
                     style = MaterialTheme.typography.h5,
                     modifier = Modifier
                         .padding(start = 25.dp, end = 10.dp)
@@ -280,7 +285,7 @@ fun ProfileScreenComposable(modifier: Modifier = Modifier) {
                         .padding(start = 25.dp, end = 10.dp)
                 )
 
-                Text(text = "01/05/2023",
+                Text(text = CurrentUser.user!!.lastaccess,
                     style = MaterialTheme.typography.h5,
                     modifier = Modifier
                         .padding(start = 25.dp, end = 10.dp)

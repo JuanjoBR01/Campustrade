@@ -4,6 +4,7 @@ import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
 import com.example.campustrade.dtos.UserObj
+import com.example.campustrade.objects.CurrentUser
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.toObjects
 import kotlinx.coroutines.tasks.await
@@ -38,6 +39,15 @@ class UsersRepository {
                         .addOnFailureListener {
                             Log.d("Last access date", "The date was updated successfully")
                         }
+
+                    val name = user.getString("name")
+                    val tag = user.getString("tag")
+                    val image = user.getString("image")
+
+                    CurrentUser.user = UserObj(name!!, email, tag!!, image!!, newDate)
+
+
+
 
                 }
             }
