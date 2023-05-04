@@ -1,6 +1,9 @@
 package com.example.campustrade.login
 
+import android.os.Build
+import android.util.Log
 import android.util.Patterns
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -11,12 +14,17 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import com.example.campustrade.data.Resource
-import com.google.firebase.ktx.Firebase
+import com.example.campustrade.dtos.UserObj
+import com.example.campustrade.objects.CurrentUser
+import com.example.campustrade.profile.UsersRepository
+import com.example.campustrade.repository.AuthRepository
 import kotlinx.coroutines.flow.StateFlow
+import java.time.LocalDateTime
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val repository: AuthRepository):
+    private val repository: AuthRepository
+):
     ViewModel(){
 
     private val _email = MutableLiveData<String>()
@@ -28,7 +36,7 @@ class LoginViewModel @Inject constructor(
     private val _loginEnable = MutableLiveData<Boolean>()
     val loginEnable: LiveData<Boolean> = _loginEnable
 
-    private val _signupEnable = MutableLiveData<Boolean>(true)
+    private val _signupEnable = MutableLiveData(true)
     val signupEnable: LiveData<Boolean> = _signupEnable
 
     private val _loginFlow = MutableStateFlow<Resource<FirebaseUser>?>(null)
@@ -36,6 +44,8 @@ class LoginViewModel @Inject constructor(
 
     val currentUser: FirebaseUser?
         get() = repository.currentUser
+
+    private val usersRepository = UsersRepository()
 
     fun onLoginChanged(email: String, password: String){
         _email.value = email
@@ -48,23 +58,6 @@ class LoginViewModel @Inject constructor(
 
     private fun isValidPassword(password: String): Boolean = password.length > 6
 
-    fun onLoginSelected(email: String, password: String): Boolean{
-
-        //runBlocking {
-        //    launch {
-        //        repository.makeLogin(email, password)
-        //        loginSuccessful = repository.successfulLogin.value
-        //    }
-//
-  //      }
-
-        //return loginSuccessful == true
-        return true
-
-    }
-
-
-
     init {
         logOut()
         if(repository.currentUser != null) {
@@ -72,19 +65,30 @@ class LoginViewModel @Inject constructor(
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     fun login(email: String, password: String) = viewModelScope.launch {
         _loginFlow.value = Resource.Loading
         _signupEnable.value = false
         _loginEnable.value = false
         val result = repository.login(email, password)
+
+        val accessDate = LocalDateTime.now()
+        val accessString = "${accessDate.dayOfMonth}/${accessDate.monthValue}/${accessDate.year} - ${accessDate.hour}:${accessDate.minute}"
+
+        usersRepository.updateDate(email, accessString)
+
+
         _loginFlow.value = result
         _loginEnable.value = true
         _signupEnable.value = true
 
     }
 
+
     fun logOut() {
         repository.logout()
         _loginFlow.value = null
     }
+
+
 }

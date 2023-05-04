@@ -13,7 +13,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.runtime.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.*
@@ -26,24 +25,29 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.VisualTransformation
 import com.example.campustrade.ui.theme.CampustradeTheme
 import com.example.campustrade.ui.theme.darkBlue
 import com.example.campustrade.ui.theme.orange
 import com.example.campustrade.ui.theme.white
-import java.text.SimpleDateFormat
 import android.content.Context
 import android.os.Environment
+import android.util.Log
+import androidx.activity.viewModels
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
 import androidx.core.content.FileProvider
 import coil.compose.rememberAsyncImagePainter
+import com.example.campustrade.ConnectivityReceiver
 import com.example.campustrade.R
+import com.example.campustrade.data.Resource
+import com.example.campustrade.data.database.daos.UserDao
+import com.example.campustrade.home.HomeActivityMVVM
 import com.example.campustrade.login.LoginScreen
+import com.example.campustrade.repository.AuthenticationRepository
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.io.File
@@ -53,11 +57,13 @@ import java.util.UUID.*
 
 class SignUpScreen : ComponentActivity() {
 
+    //private val viewModel by viewModels<SignUpViewModel>()
+    private val viewModel = SignUpViewModel(AuthenticationRepository(FirebaseAuth.getInstance()))
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             CampustradeTheme {
-                SignUpScreenComposable(viewModel = SignUpViewModel(SignUpRepository()))
+                SignUpScreenComposable(viewModel = viewModel)
             }
         }
     }
@@ -67,7 +73,6 @@ class SignUpScreen : ComponentActivity() {
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun SignUpScreenComposable(modifier: Modifier = Modifier, viewModel: SignUpViewModel) {
-    //var mTextFieldSize by remember { mutableStateOf(Size.Zero)}
     val prodType = arrayOf("Material", "Product", "Accessory", "Other")
 
     val expanded: Boolean by viewModel.expanded.observeAsState(initial = false)
@@ -79,9 +84,8 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier, viewModel: SignUpViewM
 
     val context = LocalContext.current
 
-    val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-    val currentDate = Date()
-    val publishDat = dateFormat.format(currentDate)
+    val signUpFlow = viewModel?.signUpFlow?.collectAsState()
+
 
 
     var contentImage = remember{
@@ -140,7 +144,6 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier, viewModel: SignUpViewM
                 .background(Color(0xFFFB8500))
                 .height(120.dp)
                 .width(120.dp)
-                .clip(RoundedCornerShape(20.dp))
         ) {
             PhotoView2(imagePath = contentImage.value, scope = scope, state = state)
         }
@@ -246,7 +249,6 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier, viewModel: SignUpViewM
 
         Button(
             onClick = {
-                var aux: Boolean
                 var mes: String
                 if (secretField.length < 6 || confirmSecretField.length < 6) {
                     mes = "The password needs at least 6 characters"
@@ -259,23 +261,21 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier, viewModel: SignUpViewM
                 } else if (contentImage.value == null){
                     mes = "Please take a photo"
                 } else {
+                    mes = "Uploading info..."
+                    viewModel?.uploadImage(context, contentImage.value, valueType, nameField, emailField, secretField)
 
-                    aux = uploadImageToDB(context, contentImage.value, viewModel,
-                        valueType, nameField, emailField, secretField)
-                    mes = if (aux) {
-                        "User created in Auth system and FireStore DB"
-                    } else {
-                        "Failed to create user in the DB"
-                    }
 
                     viewModel.restartForm()
                 }
+
 
                 Toast.makeText(
                     context,
                     mes,
                     Toast.LENGTH_LONG
                 ).show()
+
+
 
                 },
             colors = ButtonDefaults.buttonColors(
@@ -313,9 +313,30 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier, viewModel: SignUpViewM
                 }
 
             }
-        )
-        {
+        ) { }
 
+        NoInternetDialog(context)
+
+        signUpFlow?.value?.let {
+            when(it) {
+                is Resource.Failure ->{
+                    val context = LocalContext.current
+                    Toast.makeText(context, it.exception.message, Toast.LENGTH_SHORT).show()
+                }
+                is Resource.Loading -> {
+                    CircularProgressIndicator(Modifier.align(Alignment.CenterHorizontally))
+
+                }
+                is Resource.Success -> {
+                    LaunchedEffect(Unit) {
+                        val intent = Intent(context, HomeActivityMVVM::class.java)
+                        context.startActivity(intent)
+                    }
+                }
+                Resource.PastFailure -> {
+                    println("Just failed")
+                }
+            }
         }
 
 
@@ -349,18 +370,6 @@ fun createImageFile2(context:Context): File {
 }
 
 
-fun uploadImageToDB(context: Context, contentImage: Uri?, viewModel: SignUpViewModel, vt: String, nn: String, em: String, pw: String): Boolean {
-    // create the storage reference
-    var aux = true
-    aux = viewModel.uploadImage(context, contentImage, viewModel, vt, nn, em, pw)
-
-    return aux
-
-
-}
-
-
-
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun PhotoView2(modifier: Modifier = Modifier, imagePath:Uri?, scope: CoroutineScope, state: ModalBottomSheetState){
@@ -371,7 +380,6 @@ fun PhotoView2(modifier: Modifier = Modifier, imagePath:Uri?, scope: CoroutineSc
         else{
             rememberAsyncImagePainter(
                 model = imagePath,//ImageRequest.Builder(context = LocalContext.current)
-                //.crossfade(true).data(imagePath).build(),
                 filterQuality = FilterQuality.High
             )
         },
@@ -452,12 +460,25 @@ private fun BottomActionItem2(modifier: Modifier = Modifier, title:String, resou
 }
 
 
-
-
-@Preview
 @Composable
-fun SignUpScreenPreview() {
-    CampustradeTheme {
-        SignUpScreenComposable(viewModel = SignUpViewModel(SignUpRepository()))
+fun NoInternetDialog(context: Context) {
+    val connectivityReceiver = remember { ConnectivityReceiver(context = context) }
+    connectivityReceiver.register()
+
+    if (!connectivityReceiver.isOnline) {
+        AlertDialog(
+            onDismissRequest = {},
+            title = { Text("Disconnected!") },
+            text = { Text("Oops! You aren't connected to internet, so we won't be able to process you signup request :(") },
+            confirmButton = {},
+            dismissButton = {}
+        )
+        Log.d("ConnectionEvent", "Houston, we lost connectivity")
+    }
+
+    DisposableEffect(key1 = connectivityReceiver) {
+        onDispose {
+            connectivityReceiver.unregister()
+        }
     }
 }

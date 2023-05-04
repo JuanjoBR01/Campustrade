@@ -1,9 +1,9 @@
 package com.example.campustrade.login
 
+
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,7 +23,6 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.viewModels
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.platform.LocalContext
 import com.example.campustrade.home.HomeActivityMVVM
@@ -34,13 +33,23 @@ import com.example.campustrade.ui.theme.darkBlue
 import com.example.campustrade.ui.theme.orange
 import com.example.campustrade.ui.theme.yellow
 import com.example.campustrade.data.Resource
-import org.intellij.lang.annotations.JdkConstants.HorizontalAlignment
-
+import com.example.campustrade.repository.AuthenticationRepository
+import com.google.firebase.auth.FirebaseAuth
+import android.content.Context
+import android.os.Build
+import android.util.Log
+import androidx.activity.viewModels
+import androidx.annotation.RequiresApi
+import com.example.campustrade.ConnectivityReceiver
 
 class LoginScreen : ComponentActivity() {
-    private val viewModel by viewModels<LoginViewModel>()
+    //private val viewModel by viewModels<LoginViewModel>()
+    private val viewModel = LoginViewModel(AuthenticationRepository(FirebaseAuth.getInstance()))
+
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContent {
             CampustradeTheme{
                 LoginScreenComposable(viewModel = viewModel)
@@ -51,6 +60,7 @@ class LoginScreen : ComponentActivity() {
 
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun LoginScreenComposable(modifier: Modifier = Modifier, viewModel: LoginViewModel) {
 
@@ -58,11 +68,10 @@ fun LoginScreenComposable(modifier: Modifier = Modifier, viewModel: LoginViewMod
     val passwordField: String by viewModel.password.observeAsState(initial = "")
     val loginEnable: Boolean by viewModel.loginEnable.observeAsState(initial = false)
     val signupEnabled: Boolean by viewModel.signupEnable.observeAsState(initial = true)
-
-    val loginFlow = viewModel?.loginFlow?.collectAsState()
-
+    val loginFlow = viewModel.loginFlow.collectAsState()
 
     val context = LocalContext.current
+
 
     Column (
         verticalArrangement = Arrangement.Center,
@@ -131,28 +140,7 @@ fun LoginScreenComposable(modifier: Modifier = Modifier, viewModel: LoginViewMod
 
         Button(
             onClick = {
-                      viewModel?.login(emailField, passwordField)
-
-                /*
-                var aux = viewModel.onLoginSelected(emailField, passwordField)
-
-                if (aux) {
-                    Toast.makeText(
-                        context,
-                        "Login successful",
-                        Toast.LENGTH_LONG
-                    ).show()
-                    val intent = Intent(context, HomeActivityMVVM::class.java)
-                    context.startActivity(intent)
-                } else {
-                    Toast.makeText(
-                        context,
-                        "There was a problem logging you in.",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-
-                 */
+                      viewModel.login(emailField, passwordField)
             },
             colors = ButtonDefaults.buttonColors(
                 backgroundColor = orange,
@@ -205,7 +193,9 @@ fun LoginScreenComposable(modifier: Modifier = Modifier, viewModel: LoginViewMod
 
             )
 
-        loginFlow?.value?.let {
+        NoInternetDialog(context = context)
+
+        loginFlow.value?.let {
             when(it) {
                 is Resource.Failure ->{
                     val context = LocalContext.current
@@ -224,7 +214,6 @@ fun LoginScreenComposable(modifier: Modifier = Modifier, viewModel: LoginViewMod
                 Resource.PastFailure -> {
                     println("Just failed")
                 }
-
             }
         }
 
@@ -232,13 +221,25 @@ fun LoginScreenComposable(modifier: Modifier = Modifier, viewModel: LoginViewMod
 
 }
 
-
-/*
-@Preview
 @Composable
-fun LoginScreenPreview() {
-    CampustradeTheme {
-        LoginScreenComposable(viewModel = LoginViewModel(LoginRepository()))
+fun NoInternetDialog(context: Context) {
+    val connectivityReceiver = remember { ConnectivityReceiver(context = context) }
+    connectivityReceiver.register()
+
+    if (!connectivityReceiver.isOnline) {
+        AlertDialog(
+            onDismissRequest = {},
+            title = { Text("Disconnected!") },
+            text = { Text("Oops! You aren't connected to internet, so we won't be able to process you login request :(") },
+            confirmButton = {},
+            dismissButton = {}
+        )
+        Log.d("ConnectionEvent", "Houston, we lost connectivity")
+    }
+
+    DisposableEffect(key1 = connectivityReceiver) {
+        onDispose {
+            connectivityReceiver.unregister()
+        }
     }
 }
-*/
