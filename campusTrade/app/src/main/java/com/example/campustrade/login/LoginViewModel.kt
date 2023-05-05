@@ -1,14 +1,32 @@
 package com.example.campustrade.login
 
+import android.os.Build
+import android.util.Log
 import android.util.Patterns
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.FirebaseUser
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import javax.inject.Inject
+import com.example.campustrade.data.Resource
+import com.example.campustrade.dtos.UserObj
+import com.example.campustrade.objects.CurrentUser
+import com.example.campustrade.profile.UsersRepository
+import com.example.campustrade.repository.AuthRepository
+import kotlinx.coroutines.flow.StateFlow
+import java.time.LocalDateTime
 
+@HiltViewModel
+class LoginViewModel @Inject constructor(
+    private val repository: AuthRepository
+):
+    ViewModel(){
 
-class LoginViewModel(private val repository: LoginRepository): ViewModel(){
     private val _email = MutableLiveData<String>()
     val email: LiveData<String> = _email
 
@@ -18,26 +36,59 @@ class LoginViewModel(private val repository: LoginRepository): ViewModel(){
     private val _loginEnable = MutableLiveData<Boolean>()
     val loginEnable: LiveData<Boolean> = _loginEnable
 
+    private val _signupEnable = MutableLiveData(true)
+    val signupEnable: LiveData<Boolean> = _signupEnable
+
+    private val _loginFlow = MutableStateFlow<Resource<FirebaseUser>?>(null)
+    val loginFlow: StateFlow<Resource<FirebaseUser>?> = _loginFlow
+
+    val currentUser: FirebaseUser?
+        get() = repository.currentUser
+
+    private val usersRepository = UsersRepository()
+
     fun onLoginChanged(email: String, password: String){
         _email.value = email
         _password.value = password
         _loginEnable.value = isValidEmail(email) && isValidPassword(password)
+        _loginFlow.value = Resource.PastFailure
     }
 
     private fun isValidEmail(email: String): Boolean = Patterns.EMAIL_ADDRESS.matcher(email).matches()
 
     private fun isValidPassword(password: String): Boolean = password.length > 6
 
-
-    fun onLoginSelected(email: String, password: String): Boolean{
-        var aux: Boolean = true
-        runBlocking {
-            launch {
-                aux = repository.makeLogin(email, password)
-            }
+    init {
+        logOut()
+        if(repository.currentUser != null) {
+            _loginFlow.value = Resource.Success(repository.currentUser!!)
         }
+    }
 
-        return aux
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun login(email: String, password: String) = viewModelScope.launch {
+        _loginFlow.value = Resource.Loading
+        _signupEnable.value = false
+        _loginEnable.value = false
+        val result = repository.login(email, password)
+
+        val accessDate = LocalDateTime.now()
+        val accessString = "${accessDate.dayOfMonth}/${accessDate.monthValue}/${accessDate.year} - ${accessDate.hour}:${accessDate.minute}"
+
+        usersRepository.updateDate(email, accessString)
+
+
+        _loginFlow.value = result
+        _loginEnable.value = true
+        _signupEnable.value = true
 
     }
+
+
+    fun logOut() {
+        repository.logout()
+        _loginFlow.value = null
+    }
+
+
 }

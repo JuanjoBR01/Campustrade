@@ -12,6 +12,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.campustrade.*
 import com.example.campustrade.history.HistoryActivity
+import com.example.campustrade.profile.ProfileScreen
 import com.example.campustrade.publish.PublishScreen
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -193,6 +194,12 @@ class HomeViewModel(private val repository: HomeRepository): ViewModel() {
             val intent = Intent(context, HistoryActivity::class.java)
             context.startActivity(intent)
         }
+        else if(name == "Profile")
+        {
+            val intent = Intent(context, ProfileScreen::class.java)
+            context.startActivity(intent)
+        }
+
     }
 
 }
