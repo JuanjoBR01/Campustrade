@@ -19,7 +19,7 @@ class UsersRepository {
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    suspend fun updateDate(email: String, newDate: String) {
+    fun updateDate(email: String, newDate: String) {
 
         val collec = db.collection("users")
         val query = collec.whereEqualTo("email", email)

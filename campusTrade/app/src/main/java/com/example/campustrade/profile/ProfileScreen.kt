@@ -35,6 +35,8 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Alignment.Companion.Start
+import androidx.compose.ui.draw.rotate
+import coil.compose.rememberImagePainter
 import com.example.campustrade.objects.CurrentUser
 import com.example.campustrade.ui.theme.orange
 import org.checkerframework.checker.units.qual.Current
@@ -62,6 +64,7 @@ fun ProfileScreenComposable(modifier: Modifier = Modifier) {
 
     val nameField = CurrentUser.user!!.name
     val emailField = CurrentUser.user!!.email
+    val imageUrl = CurrentUser.user!!.image
 
 
 
@@ -103,11 +106,11 @@ fun ProfileScreenComposable(modifier: Modifier = Modifier) {
         ) {
             Box(
                 modifier = Modifier
-                    .background(Color(0xFF8ECAE6))
+                    .background(Color(0xFFFFFFFF))
                     .height(120.dp)
                     .width(120.dp)
             ) {
-                Image(
+                /*Image(
                     painter = painterResource(id = R.drawable.sampleuser),
                     contentDescription = null,
                     modifier = modifier
@@ -116,6 +119,19 @@ fun ProfileScreenComposable(modifier: Modifier = Modifier) {
                         .background(color = Color.Transparent)
                         .align(Alignment.Center)
                 )
+                 */
+
+                Image(
+                    painter = rememberImagePainter(
+                        data = imageUrl,
+                        builder = {
+                            crossfade(true)
+                        }
+                    ),
+                    contentDescription = "Imagen",
+                    modifier = Modifier.rotate(90f).height(120.dp)
+                )
+
 
             }
 

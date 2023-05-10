@@ -15,7 +15,6 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import com.example.campustrade.data.Resource
 import com.example.campustrade.dtos.UserObj
-import com.example.campustrade.objects.CurrentUser
 import com.example.campustrade.profile.UsersRepository
 import com.example.campustrade.repository.AuthRepository
 import kotlinx.coroutines.flow.StateFlow
