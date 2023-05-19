@@ -1,7 +1,7 @@
 package com.example.campustrade.login
 
+import android.content.Context
 import android.os.Build
-import android.util.Log
 import android.util.Patterns
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.LiveData
@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import com.example.campustrade.data.Resource
-import com.example.campustrade.dtos.UserObj
 import com.example.campustrade.profile.UsersRepository
 import com.example.campustrade.repository.AuthRepository
 import kotlinx.coroutines.flow.StateFlow
@@ -65,7 +64,7 @@ class LoginViewModel @Inject constructor(
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    fun login(email: String, password: String) = viewModelScope.launch {
+    fun login(email: String, password: String, context: Context) = viewModelScope.launch {
         _loginFlow.value = Resource.Loading
         _signupEnable.value = false
         _loginEnable.value = false
@@ -74,7 +73,7 @@ class LoginViewModel @Inject constructor(
         val accessDate = LocalDateTime.now()
         val accessString = "${accessDate.dayOfMonth}/${accessDate.monthValue}/${accessDate.year} - ${accessDate.hour}:${accessDate.minute}"
 
-        usersRepository.updateDate(email, accessString)
+        usersRepository.updateDate(email, accessString, context)
 
 
         _loginFlow.value = result
@@ -88,6 +87,8 @@ class LoginViewModel @Inject constructor(
         repository.logout()
         _loginFlow.value = null
     }
+
+
 
 
 }

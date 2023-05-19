@@ -140,7 +140,7 @@ fun LoginScreenComposable(modifier: Modifier = Modifier, viewModel: LoginViewMod
 
         Button(
             onClick = {
-                      viewModel.login(emailField, passwordField)
+                      viewModel.login(emailField, passwordField, context)
             },
             colors = ButtonDefaults.buttonColors(
                 backgroundColor = orange,
