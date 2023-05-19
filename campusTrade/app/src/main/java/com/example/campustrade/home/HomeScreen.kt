@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.rememberImagePainter
 import com.example.campustrade.ConnectivityReceiver
 import com.example.campustrade.ProductDB
+import com.example.campustrade.history.HistoryViewModel
 import com.example.campustrade.ui.theme.black
 
 

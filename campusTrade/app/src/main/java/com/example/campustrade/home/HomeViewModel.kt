@@ -14,6 +14,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.campustrade.*
 import com.example.campustrade.history.HistoryActivity
+import com.example.campustrade.history.HistoryRepository
 import com.example.campustrade.objects.CurrentUser
 import com.example.campustrade.profile.ProfileScreen
 import com.example.campustrade.publish.PublishScreen
@@ -23,7 +24,7 @@ import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.*
 
-class HomeViewModel(private val repository: HomeRepository): ViewModel() {
+class HomeViewModel(private val repository: HomeRepository, private val historyRepository: HistoryRepository): ViewModel() {
 
     private val _preference = MutableLiveData<String>()
     val preference : LiveData<String> = _preference
@@ -137,6 +138,52 @@ class HomeViewModel(private val repository: HomeRepository): ViewModel() {
             launch{
                 val actualList = repository.getData()
 
+                val userList = historyRepository.getData()
+
+                var preferenceResp = preference
+
+                var contAcc = 0
+                var contPro = 0
+                var contMat = 0
+                var contOth = 0
+
+                userList.forEach{producto ->
+                    if(producto.type == "Accesory")
+                    {
+                        contAcc++
+                    }
+                    else if(producto.type == "Material")
+                    {
+                        contMat++
+                    }
+                    else if(producto.type == "Product")
+                    {
+                        contPro++
+                    }
+                    else{
+                        contOth++
+                    }
+                }
+
+                if(contAcc >= contPro && contAcc >= contMat && contAcc >= contOth)
+                {
+                    preferenceResp = "Accesory"
+                }
+                else if(contPro >= contAcc && contPro >= contMat && contPro >= contOth)
+                {
+                    preferenceResp = "Product"
+                }
+                else if(contMat >= contAcc && contMat >= contPro && contMat >= contOth)
+                {
+                    preferenceResp = "Product"
+                }
+                else
+                {
+                    preferenceResp = "Other"
+                }
+
+
+
                 //val preference = "Used"
                 val strategy = StrategyContext(SortingProductsStrategyType())
 
@@ -144,12 +191,14 @@ class HomeViewModel(private val repository: HomeRepository): ViewModel() {
 
                 if(preference == "Used"){
                     strategy.setStrategy(SortingProductsStrategyCondition())
+                    preferenceResp = "Used"
                 }
                 if(preference == "New"){
                     strategy.setStrategy(SortingProductsStrategyCondition())
+                    preferenceResp = "New"
                 }
 
-                productList = strategy.executeStrategy(preference, actualList)
+                productList = strategy.executeStrategy(preferenceResp, actualList)
 
 
                 if(search != "")
