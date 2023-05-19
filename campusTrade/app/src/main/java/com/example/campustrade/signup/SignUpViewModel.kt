@@ -4,6 +4,8 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -81,11 +83,13 @@ class SignUpViewModel @Inject constructor(
     }
 
 
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun createUser(vt: String, nn: String, em: String, pw: String, imgUrl: String) = viewModelScope.launch {
         creationRepository.createUser(vt, nn, em, pw, imgUrl)
 
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     fun uploadImage(context: Context, contentImage: Uri?, vt: String, nn: String, em: String, pw: String) = viewModelScope.launch {
         _signUpFlow.value = Resource.Loading
         val result = repository.signup(nn, em, pw)

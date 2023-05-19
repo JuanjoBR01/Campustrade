@@ -1,5 +1,6 @@
 package com.example.campustrade.profile
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -59,12 +60,17 @@ class ProfileScreen : ComponentActivity() {
 fun ProfileScreenComposable(modifier: Modifier = Modifier) {
 
     val context = LocalContext.current
-    //val nameField by remember { mutableStateOf("Lionel Messi")    }
-    //val emailField by remember { mutableStateOf("l.messi@uniandes.edu.co")    }
 
-    val nameField = CurrentUser.user!!.name
-    val emailField = CurrentUser.user!!.email
-    val imageUrl = CurrentUser.user!!.image
+    val sharedPreferences = context.getSharedPreferences("logged_user_preferences", Context.MODE_PRIVATE)
+
+
+    //val nameField = CurrentUser.user!!.name
+    //val emailField = CurrentUser.user!!.email
+    //val imageUrl = CurrentUser.user!!.image
+    val nameField = sharedPreferences.getString("name", "     ")
+    val emailField = sharedPreferences.getString("email", "     ")
+    val imageUrl = sharedPreferences.getString("image", "     ")
+    val tagField = sharedPreferences.getString("tag", "     ")
 
 
 
@@ -140,14 +146,14 @@ fun ProfileScreenComposable(modifier: Modifier = Modifier) {
                     .fillMaxWidth()
                     .align(CenterVertically)
                 ){
-                Text(text = if (nameField.length > 20) nameField.substring(0,17) + "..." else nameField,
+                Text(text = if (nameField!!.length > 20) nameField.substring(0,17) + "..." else nameField,
                     style = MaterialTheme.typography.h4,
                     modifier = Modifier.align(CenterHorizontally)
                 )
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                Text(text = if (emailField.substring(0,emailField.indexOf("@")).length > 20) emailField.substring(0,17) + "..." else emailField.substring(0,emailField.indexOf("@")),
+                Text(text = if (emailField!!.substring(0,emailField!!.indexOf("@")).length > 20) emailField.substring(0,17) + "..." else emailField.substring(0,emailField.indexOf("@")),
                     style = MaterialTheme.typography.h5,
                     modifier = Modifier.align(CenterHorizontally)
                 )
@@ -285,7 +291,7 @@ fun ProfileScreenComposable(modifier: Modifier = Modifier) {
                         .padding(start = 25.dp, end = 10.dp)
                 )
 
-                Text(text = CurrentUser.user!!.tag,
+                Text(text = tagField!!,
                     style = MaterialTheme.typography.h5,
                     modifier = Modifier
                         .padding(start = 25.dp, end = 10.dp)

@@ -40,10 +40,12 @@ import android.os.Build
 import android.util.Log
 import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.campustrade.ConnectivityReceiver
 
 class LoginScreen : ComponentActivity() {
     //private val viewModel by viewModels<LoginViewModel>()
+    @RequiresApi(Build.VERSION_CODES.O)
     private val viewModel = LoginViewModel(AuthenticationRepository(FirebaseAuth.getInstance()))
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -68,6 +70,7 @@ fun LoginScreenComposable(modifier: Modifier = Modifier, viewModel: LoginViewMod
     val passwordField: String by viewModel.password.observeAsState(initial = "")
     val loginEnable: Boolean by viewModel.loginEnable.observeAsState(initial = false)
     val signupEnabled: Boolean by viewModel.signupEnable.observeAsState(initial = true)
+    val launchedTime: Boolean by viewModel.launchedTime.observeAsState(initial = false)
     val loginFlow = viewModel.loginFlow.collectAsState()
 
     val context = LocalContext.current
@@ -140,7 +143,7 @@ fun LoginScreenComposable(modifier: Modifier = Modifier, viewModel: LoginViewMod
 
         Button(
             onClick = {
-                      viewModel.login(emailField, passwordField)
+                      viewModel.login(emailField, passwordField, context)
             },
             colors = ButtonDefaults.buttonColors(
                 backgroundColor = orange,
@@ -217,6 +220,12 @@ fun LoginScreenComposable(modifier: Modifier = Modifier, viewModel: LoginViewMod
             }
         }
 
+        if (!launchedTime) {
+            viewModel.uploadLaunchTime()
+            viewModel.launched()
+        }
+
+
     }
 
 }
@@ -242,4 +251,6 @@ fun NoInternetDialog(context: Context) {
             connectivityReceiver.unregister()
         }
     }
+
+
 }
