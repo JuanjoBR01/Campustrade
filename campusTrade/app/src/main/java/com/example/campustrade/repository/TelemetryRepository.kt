@@ -30,14 +30,13 @@ class TelemetryRepository {
             "Time" to TimeOfLaunch.time
         )
 
-        withContext(Dispatchers.IO) {
-            collec.add(launchTime).addOnSuccessListener { documentReference ->
-                println("Documento agregado con ID: ${documentReference.id}")
-            }
-                .addOnFailureListener { e ->
-                    println("Error al agregar el documento: $e")
-                }
+        collec.add(launchTime).addOnSuccessListener { documentReference ->
+            println("Documento agregado con ID: ${documentReference.id}")
         }
+            .addOnFailureListener { e ->
+                println("Error al agregar el documento: $e")
+            }
+
 
 
 

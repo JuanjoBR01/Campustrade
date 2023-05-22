@@ -1,5 +1,7 @@
 package com.example.campustrade.home
 
+import android.content.Context
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -19,6 +21,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
@@ -28,7 +31,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.rememberImagePainter
+import com.example.campustrade.ConnectivityReceiver
 import com.example.campustrade.ProductDB
+import com.example.campustrade.history.HistoryViewModel
 import com.example.campustrade.ui.theme.black
 
 
@@ -43,6 +49,8 @@ fun readData2(homeViewModel: HomeViewModel){
 fun MyBodyHome2(homeViewModel: HomeViewModel){
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
+
+    val contexto = LocalContext.current.applicationContext
 
     val maxChar = 25
     val value :String by homeViewModel.value.observeAsState(initial = "")
@@ -94,6 +102,7 @@ fun MyBodyHome2(homeViewModel: HomeViewModel){
                         //homeViewModel.onPreferenceChange("Type")
                         preference = "Accesory"
                         homeViewModel.arrangeProductListFirestore(value, preference)
+                        homeViewModel.saveToSharedPreferences(contexto, "preference", preference)
                         expanded = false
                     },
                     modifier = Modifier.background(Color(0xFFB4E7FF)))
@@ -105,6 +114,7 @@ fun MyBodyHome2(homeViewModel: HomeViewModel){
                         //homeViewModel.onPreferenceChange("Used")
                         preference = "Used"
                         homeViewModel.arrangeProductListFirestore(value, preference)
+                        homeViewModel.saveToSharedPreferences(contexto, "preference", preference)
                         expanded = false
                     },
                     modifier = Modifier.background(Color(0xFFB4E7FF)))
@@ -116,6 +126,7 @@ fun MyBodyHome2(homeViewModel: HomeViewModel){
                         //homeViewModel.onPreferenceChange("New")
                         preference = "New"
                         homeViewModel.arrangeProductListFirestore(value, preference)
+                        homeViewModel.saveToSharedPreferences(contexto, "preference", preference)
                         expanded = false
                     },
                         modifier = Modifier.background(Color(0xFFB4E7FF)))
@@ -133,31 +144,37 @@ fun MyBodyHome2(homeViewModel: HomeViewModel){
 
     //val productList = homeViewModel.arrangeProductList(value)
 
-    val data :List<ProductDB> by homeViewModel.productList.observeAsState(emptyList())
+    ConnectionLost(context = contexto)
 
-    homeViewModel.arrangeProductListFirestore(value, preference)
+        val data: List<ProductDB> by homeViewModel.productList.observeAsState(emptyList())
 
-    if(data.size == 0){
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = androidx.compose.ui.Alignment.Center
-        ) {
-            CircularProgressIndicator(
-                color = Color.Blue,
-                strokeWidth = 4.dp,
-            )
+        val prefAnt = homeViewModel.retrieveFromSharedPreferences(contexto, "preference")
+        if (prefAnt == null) {
+            homeViewModel.arrangeProductListFirestore(value, preference)
+        } else {
+            homeViewModel.arrangeProductListFirestore(value, prefAnt)
         }
-    }
-    else{
-        Box(modifier = Modifier.height(screenHeight-130.dp))
-        {
-            LazyVerticalGrid(columns = GridCells.Adaptive(minSize = 150.dp)) {
-                items(data) { item ->
-                    ProductList2(item, homeViewModel)
+
+        if (data.size == 0) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = androidx.compose.ui.Alignment.Center
+            ) {
+                CircularProgressIndicator(
+                    color = Color.Blue,
+                    strokeWidth = 4.dp,
+                )
+            }
+        } else {
+            Box(modifier = Modifier.height(screenHeight - 130.dp))
+            {
+                LazyVerticalGrid(columns = GridCells.Adaptive(minSize = 150.dp)) {
+                    items(data) { item ->
+                        ProductList2(item, homeViewModel)
+                    }
                 }
             }
         }
-    }
 }
 
 @Composable
@@ -170,6 +187,25 @@ fun ProductList2(producto: ProductDB, homeViewModel: HomeViewModel) {
         .background(Color(0xFFEBEBEB))
     )
     {
+        var discount = " "
+        if(producto.type == "Accesory") {
+            discount = "-" + homeViewModel.getDiscount().toString() + "%"
+        }
+        Box(
+            contentAlignment = Alignment.CenterEnd,
+            modifier = Modifier
+                .padding(end = 10.dp, top = 5.dp)
+                .fillMaxWidth()
+                .background(Color(0xFFEBEBEB))
+        ) {
+            Text(
+                text = discount,
+                style = MaterialTheme.typography.h6,
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFFFB8500)
+            )
+        }
         Box(
             modifier = Modifier
                 .padding(10.dp)
@@ -177,11 +213,16 @@ fun ProductList2(producto: ProductDB, homeViewModel: HomeViewModel) {
             contentAlignment = Alignment.Center
         ) {
             Image(
+                painter = rememberImagePainter(
+                    data = producto.image,
+                    builder = {
+                        crossfade(true)
+                    }
+                ),
+                contentDescription = "Imagen",
                 modifier = Modifier
                     .size(175.dp)
-                    .clip(RoundedCornerShape(25.dp)),
-                painter = painterResource(homeViewModel.returnImage(producto.name)),
-                contentDescription = "Imagen",
+                    .clip(RoundedCornerShape(25.dp))
             )
         }
         Box(
@@ -218,13 +259,21 @@ fun ProductList2(producto: ProductDB, homeViewModel: HomeViewModel) {
                 .background(Color(0xFFEBEBEB))
                 .padding(bottom = 16.dp)
         ) {
-            Text(
-                text = producto.type + " - " + producto.condition,
-                style = MaterialTheme.typography.h6,
-                fontSize = 17.sp,
-                color = Color(0xFF939393)
-            )
-
+            Column(horizontalAlignment = Alignment.CenterHorizontally)
+            {
+                Text(
+                    text = producto.type + " - " + producto.condition,
+                    style = MaterialTheme.typography.h6,
+                    fontSize = 17.sp,
+                    color = Color(0xFF939393)
+                )
+                Text(
+                    text = "Stock: " + producto.stock.toString(),
+                    style = MaterialTheme.typography.h6,
+                    fontSize = 17.sp,
+                    color = Color(0xFF939393)
+                )
+            }
         }
 
     }
@@ -281,6 +330,29 @@ fun MyBottomBar2(homeViewModel: HomeViewModel) {
                     modifier = Modifier.background(homeViewModel.returnColor(textColor))
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun ConnectionLost(context: Context) {
+    val connectivityReceiver = remember { ConnectivityReceiver(context = context) }
+    connectivityReceiver.register()
+
+    if (!connectivityReceiver.isOnline) {
+        AlertDialog(
+            onDismissRequest = {},
+            title = { Text("Disconnected!") },
+            text = { Text("No Internet Connection Found. Please connect again to use all features!") },
+            confirmButton = {},
+            dismissButton = {}
+        )
+        Log.d("ConnectionEvent", "Lost connectivity")
+    }
+
+    DisposableEffect(key1 = connectivityReceiver) {
+        onDispose {
+            connectivityReceiver.unregister()
         }
     }
 }

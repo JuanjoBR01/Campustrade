@@ -17,7 +17,9 @@ import com.example.campustrade.data.Resource
 import com.example.campustrade.profile.UsersRepository
 import com.example.campustrade.repository.AuthRepository
 import com.example.campustrade.repository.TelemetryRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.withContext
 import java.time.LocalDateTime
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -78,36 +80,30 @@ class LoginViewModel @Inject constructor(
         _loginFlow.value = Resource.Loading
         _signupEnable.value = false
         _loginEnable.value = false
-        val result = repository.login(email, password)
 
-        val accessDate = LocalDateTime.now()
-        val accessString = "${accessDate.dayOfMonth}/${accessDate.monthValue}/${accessDate.year} - ${if(accessDate.hour<10) "0" + accessDate.hour else accessDate.hour}:${if(accessDate.minute<10) "0" + accessDate.minute else accessDate.minute}"
+        withContext(Dispatchers.IO) {
+            val result = repository.login(email, password)
+            val accessDate = LocalDateTime.now()
+            val accessString = "${accessDate.dayOfMonth}/${accessDate.monthValue}/${accessDate.year} - ${if(accessDate.hour<10) "0" + accessDate.hour else accessDate.hour}:${if(accessDate.minute<10) "0" + accessDate.minute else accessDate.minute}"
+            usersRepository.updateDate(email, accessString, context)
+            _loginFlow.value = result
+        }
 
-        usersRepository.updateDate(email, accessString, context)
-
-
-        _loginFlow.value = result
         _loginEnable.value = true
         _signupEnable.value = true
-
     }
-
 
     fun logOut() {
         repository.logout()
         _loginFlow.value = null
     }
 
-    fun uploadLaunchTime() =  viewModelScope.launch{
+    fun uploadLaunchTime() =  viewModelScope.launch (Dispatchers.IO){
         telemetryRepository.uploadLaunchTime()
     }
 
     fun launched() {
         _launchedTime.value = true
     }
-
-
-
-
 
 }

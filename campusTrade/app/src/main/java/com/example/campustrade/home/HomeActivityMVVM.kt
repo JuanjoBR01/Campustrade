@@ -10,6 +10,7 @@ import androidx.compose.material.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.campustrade.history.HistoryRepository
 import com.example.campustrade.ui.theme.CampustradeTheme
 
 class HomeActivityMVVM : ComponentActivity() {
@@ -23,8 +24,8 @@ class HomeActivityMVVM : ComponentActivity() {
                         .fillMaxSize())
                     {
                         //readData2(HomeViewModel(HomeRepository()))
-                        MyBodyHome2(HomeViewModel(HomeRepository()))
-                        MyBottomBar2(HomeViewModel(HomeRepository()))
+                        MyBodyHome2(HomeViewModel(HomeRepository(), HistoryRepository()))
+                        MyBottomBar2(HomeViewModel(HomeRepository(), HistoryRepository()))
                     }
                 }
             }
@@ -42,8 +43,8 @@ fun DefaultPreview2() {
             .fillMaxSize())
         {
             //readData2(HomeViewModel(HomeRepository()))
-            MyBodyHome2(HomeViewModel(HomeRepository()))
-            MyBottomBar2(HomeViewModel(HomeRepository()))
+            MyBodyHome2(HomeViewModel(HomeRepository(), HistoryRepository()))
+            MyBottomBar2(HomeViewModel(HomeRepository(), HistoryRepository()))
         }
     }
 }

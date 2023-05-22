@@ -17,9 +17,11 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.util.*
 import javax.inject.Inject
@@ -84,36 +86,38 @@ class SignUpViewModel @Inject constructor(
 
 
     @RequiresApi(Build.VERSION_CODES.O)
-    private fun createUser(vt: String, nn: String, em: String, pw: String, imgUrl: String) = viewModelScope.launch {
+    private fun createUser(vt: String, nn: String, em: String, pw: String, imgUrl: String) = viewModelScope.launch (Dispatchers.IO){
         creationRepository.createUser(vt, nn, em, pw, imgUrl)
-
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun uploadImage(context: Context, contentImage: Uri?, vt: String, nn: String, em: String, pw: String) = viewModelScope.launch {
         _signUpFlow.value = Resource.Loading
-        val result = repository.signup(nn, em, pw)
-        repository.login(em, pw)
-        _signUpFlow.value = result
 
-        val storageRef = Firebase.storage.reference
-        //Transform to bitmap
-        val inputStream = context.contentResolver.openInputStream(contentImage!!)
-        val bitmp: Bitmap = BitmapFactory.decodeStream(inputStream)
-        //Bitmap to bytes
-        val outputStream = ByteArrayOutputStream()
-        bitmp.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
-        val bytes = outputStream.toByteArray()
-        //Create variable to store url
-        var imgUrl: String
-        //Upload to DB
-        val storeR = storageRef.child("images/${UUID.randomUUID()}")
-        val uploadTask = storeR.putBytes(bytes)
-        uploadTask.addOnSuccessListener {
-            storeR.downloadUrl.addOnSuccessListener { uri ->
-                imgUrl = uri.toString()
-                createUser(vt, nn, em, pw, imgUrl)
+        withContext(Dispatchers.IO) {
+            val result = repository.signup(nn, em, pw)
+            repository.login(em, pw)
+            _signUpFlow.value = result
 
+            val storageRef = Firebase.storage.reference
+            //Transform to bitmap
+            val inputStream = context.contentResolver.openInputStream(contentImage!!)
+            val bitmp: Bitmap = BitmapFactory.decodeStream(inputStream)
+            //Bitmap to bytes
+            val outputStream = ByteArrayOutputStream()
+            bitmp.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
+            val bytes = outputStream.toByteArray()
+            //Create variable to store url
+            var imgUrl: String
+            //Upload to DB
+            val storeR = storageRef.child("images/${UUID.randomUUID()}")
+            val uploadTask = storeR.putBytes(bytes)
+            uploadTask.addOnSuccessListener {
+                storeR.downloadUrl.addOnSuccessListener { uri ->
+                    imgUrl = uri.toString()
+                    createUser(vt, nn, em, pw, imgUrl)
+
+                }
             }
         }
     }

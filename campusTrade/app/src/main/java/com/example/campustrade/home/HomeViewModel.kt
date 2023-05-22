@@ -2,34 +2,35 @@ package com.example.campustrade.home
 
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.campustrade.*
 import com.example.campustrade.history.HistoryActivity
+import com.example.campustrade.history.HistoryRepository
+import com.example.campustrade.objects.CurrentUser
 import com.example.campustrade.profile.ProfileScreen
 import com.example.campustrade.publish.PublishScreen
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import java.time.LocalDate
+import java.time.format.TextStyle
+import java.util.*
 
-class HomeViewModel(private val repository: HomeRepository): ViewModel() {
+class HomeViewModel(private val repository: HomeRepository, private val historyRepository: HistoryRepository): ViewModel() {
 
     private val _preference = MutableLiveData<String>()
     val preference : LiveData<String> = _preference
 
     private var _productList = MutableLiveData<List<ProductDB>>()
     val productList : LiveData<List<ProductDB>> = _productList
-
-    init{
-        viewModelScope.launch {
-            //_productList.value = repository.getData()
-        }
-    }
 
     private val _value = MutableLiveData<String>()
     val value : LiveData<String> = _value
@@ -72,7 +73,17 @@ class HomeViewModel(private val repository: HomeRepository): ViewModel() {
         var finalList = arrayListOf<Product>()
         val actualList = prepareProductList()
 
-        val preference = "Accesory"
+        var preference = CurrentUser.user!!.tag
+
+        if(preference == "Accesory" || preference == "Material" || preference == "Product" || preference == "Other")
+        {
+            preference = preference
+        }
+        else
+        {
+            preference = "Accesory"
+        }
+        //val preference = "Accesory"
 
         actualList.forEach { producto ->
             if(producto.type == preference)
@@ -103,6 +114,22 @@ class HomeViewModel(private val repository: HomeRepository): ViewModel() {
         return finalList
     }
 
+    fun getSharedPreferences(context: Context): SharedPreferences {
+        return context.getSharedPreferences("my_preferences", Context.MODE_PRIVATE)
+    }
+
+    fun saveToSharedPreferences(context: Context, key: String, value: String) {
+        val sharedPreferences = getSharedPreferences(context)
+        val editor = sharedPreferences.edit()
+        editor.putString(key, value)
+        editor.apply()
+    }
+
+    fun retrieveFromSharedPreferences(context: Context, key: String): String? {
+        val sharedPreferences = getSharedPreferences(context)
+        return sharedPreferences.getString(key, null)
+    }
+
     fun arrangeProductListFirestore(search: String, preference: String){
         var productList = arrayListOf<ProductDB>()
         var finalList = arrayListOf<ProductDB>()
@@ -111,6 +138,52 @@ class HomeViewModel(private val repository: HomeRepository): ViewModel() {
             launch{
                 val actualList = repository.getData()
 
+                val userList = historyRepository.getData()
+
+                var preferenceResp = preference
+
+                var contAcc = 0
+                var contPro = 0
+                var contMat = 0
+                var contOth = 0
+
+                userList.forEach{producto ->
+                    if(producto.type == "Accesory")
+                    {
+                        contAcc++
+                    }
+                    else if(producto.type == "Material")
+                    {
+                        contMat++
+                    }
+                    else if(producto.type == "Product")
+                    {
+                        contPro++
+                    }
+                    else{
+                        contOth++
+                    }
+                }
+
+                if(contAcc >= contPro && contAcc >= contMat && contAcc >= contOth)
+                {
+                    preferenceResp = "Accesory"
+                }
+                else if(contPro >= contAcc && contPro >= contMat && contPro >= contOth)
+                {
+                    preferenceResp = "Product"
+                }
+                else if(contMat >= contAcc && contMat >= contPro && contMat >= contOth)
+                {
+                    preferenceResp = "Product"
+                }
+                else
+                {
+                    preferenceResp = "Other"
+                }
+
+
+
                 //val preference = "Used"
                 val strategy = StrategyContext(SortingProductsStrategyType())
 
@@ -118,12 +191,14 @@ class HomeViewModel(private val repository: HomeRepository): ViewModel() {
 
                 if(preference == "Used"){
                     strategy.setStrategy(SortingProductsStrategyCondition())
+                    preferenceResp = "Used"
                 }
                 if(preference == "New"){
                     strategy.setStrategy(SortingProductsStrategyCondition())
+                    preferenceResp = "New"
                 }
 
-                productList = strategy.executeStrategy(preference, actualList)
+                productList = strategy.executeStrategy(preferenceResp, actualList)
 
 
                 if(search != "")
@@ -202,4 +277,21 @@ class HomeViewModel(private val repository: HomeRepository): ViewModel() {
 
     }
 
+    fun getDiscount(): Int {
+        val date = LocalDate.now()
+        val dayOfWeek = date.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.ENGLISH)
+
+        var discount = 10
+
+        if(dayOfWeek == "Monday" || dayOfWeek == "Tuesday" || dayOfWeek == "Wednesday")
+        {
+            discount = 30
+        }
+        else if(dayOfWeek == "Thursday" || dayOfWeek == "Friday")
+        {
+            discount = 20
+        }
+
+        return discount
+    }
 }
