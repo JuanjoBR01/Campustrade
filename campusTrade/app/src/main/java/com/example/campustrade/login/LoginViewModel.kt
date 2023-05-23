@@ -54,11 +54,19 @@ class LoginViewModel @Inject constructor(
 
     private val telemetryRepository = TelemetryRepository()
 
+    private val formsMap = HashMap<String, String>()
+
+
     fun onLoginChanged(email: String, password: String){
         _email.value = email
         _password.value = password
         _loginEnable.value = isValidEmail(email) && isValidPassword(password)
         _loginFlow.value = Resource.PastFailure
+
+        formsMap["email"] = email
+        formsMap["password"] = password
+
+
     }
 
     private fun isValidEmail(email: String): Boolean = Patterns.EMAIL_ADDRESS.matcher(email).matches()
@@ -71,7 +79,16 @@ class LoginViewModel @Inject constructor(
             _loginFlow.value = Resource.Success(repository.currentUser!!)
         }
 
+        if (formsMap["email"] == null) {
+            formsMap["email"] = ""
+        }
 
+        if (formsMap["password"] == null) {
+            formsMap["password"] = ""
+        }
+
+        _email.value = formsMap["email"]
+        _password.value = formsMap["password"]
 
     }
 
@@ -93,7 +110,7 @@ class LoginViewModel @Inject constructor(
         _signupEnable.value = true
     }
 
-    fun logOut() {
+    private fun logOut() {
         repository.logout()
         _loginFlow.value = null
     }

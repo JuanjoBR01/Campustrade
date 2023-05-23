@@ -12,6 +12,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.campustrade.data.Resource
 import com.example.campustrade.objects.FirebaseClient
+import com.example.campustrade.objects.SuHashMap.suMap
 import com.example.campustrade.repository.AuthRepository
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.ktx.Firebase
@@ -56,6 +57,8 @@ class SignUpViewModel @Inject constructor(
     private val creationRepository = SignUpRepository(FirebaseClient.fireStore)
 
 
+
+
     fun onExpandedChange() {
         _expanded.value = _expanded.value != true
     }
@@ -70,10 +73,12 @@ class SignUpViewModel @Inject constructor(
 
     fun onNameChange(nn: String) {
         _name.value = nn
+        suMap["nn"] = nn
     }
 
     fun onEmailChange(em: String) {
         _email.value = em
+        suMap["em"] = em
     }
 
     fun onPasswordChange(pw: String) {
@@ -88,6 +93,19 @@ class SignUpViewModel @Inject constructor(
     @RequiresApi(Build.VERSION_CODES.O)
     private fun createUser(vt: String, nn: String, em: String, pw: String, imgUrl: String) = viewModelScope.launch (Dispatchers.IO){
         creationRepository.createUser(vt, nn, em, pw, imgUrl)
+    }
+
+    init {
+        if (suMap["nn"] == null) {
+            suMap["nn"] = ""
+        }
+        if (suMap["em"] == null) {
+            suMap["em"] = ""
+        }
+
+        _name.value = suMap["nn"]
+        _email.value = suMap["em"]
+
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -123,9 +141,6 @@ class SignUpViewModel @Inject constructor(
     }
 
     fun restartForm() {
-        _valueType.value = ""
-        _name.value = ""
-        _email.value = ""
         _password.value = ""
         _confirmPassword.value = ""
     }
