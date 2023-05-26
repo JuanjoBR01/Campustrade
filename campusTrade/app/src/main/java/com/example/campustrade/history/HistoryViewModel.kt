@@ -52,9 +52,10 @@ class HistoryViewModel(private val repository: HistoryRepository): ViewModel() {
         saveToSharedPreferences(contexto, "condPur", "")
 
 
-                val actualInfo = repository.getPurchaseData()?.get(0)
-                if(actualInfo != null)
+                val actualInfo2 = repository.getPurchaseData()
+                if(actualInfo2 != null)
                 {
+                    val actualInfo = actualInfo2.get(0)
                     _numPur.postValue(actualInfo.numPurchases.toString())
                     _totPur.postValue(actualInfo.totalPurchased.toString())
                     _typePur.postValue(actualInfo.typePurchased)
