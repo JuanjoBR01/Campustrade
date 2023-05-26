@@ -48,58 +48,51 @@ class HistoryViewModel(private val repository: HistoryRepository): ViewModel() {
     fun purchaseData(contexto: Context) = viewModelScope.launch{
 
         withContext(Dispatchers.IO) {
+                try {
+                    val actualInfo = repository.getPurchaseData()?.get(0)
+                    if (actualInfo != null) {
+                        _numPur.postValue(actualInfo.numPurchases.toString())
+                        _totPur.postValue(actualInfo.totalPurchased.toString())
+                        _typePur.postValue(actualInfo.typePurchased)
+                        _condPur.postValue(actualInfo.condPurchased)
 
-            saveToSharedPreferences(contexto, "numPur", "")
-            saveToSharedPreferences(contexto, "totPur", "")
-            saveToSharedPreferences(contexto, "typePur", "")
-            saveToSharedPreferences(contexto, "condPur", "")
-
-            val connectivityReceiver = ConnectivityReceiver(context = contexto)
-            connectivityReceiver.register()
-
-            if(connectivityReceiver.isOnline)
-            {
-                val actualInfo = repository.getPurchaseData()?.get(0)
-                if(actualInfo!=null) {
-                    _numPur.postValue(actualInfo.numPurchases.toString())
-                    _totPur.postValue(actualInfo.totalPurchased.toString())
-                    _typePur.postValue(actualInfo.typePurchased)
-                    _condPur.postValue(actualInfo.condPurchased)
-
-                    saveToSharedPreferences(contexto, "numPur", actualInfo.numPurchases.toString())
-                    saveToSharedPreferences(
-                        contexto,
-                        "totPur",
-                        actualInfo.totalPurchased.toString()
-                    )
-                    saveToSharedPreferences(contexto, "typePur", actualInfo.typePurchased)
-                    saveToSharedPreferences(contexto, "condPur", actualInfo.condPurchased)
-                }
-            } else {
-                if (retrieveFromSharedPreferences(contexto, "numPur") == "") {
-                    _numPur.postValue("NO")
-                } else {
-
-                    val numPurP = retrieveFromSharedPreferences(contexto, "numPur")
-                    if (numPurP != null) {
-                        _numPur.postValue(numPurP!!)
+                        saveToSharedPreferences(
+                            contexto,
+                            "numPur",
+                            actualInfo.numPurchases.toString()
+                        )
+                        saveToSharedPreferences(
+                            contexto,
+                            "totPur",
+                            actualInfo.totalPurchased.toString()
+                        )
+                        saveToSharedPreferences(contexto, "typePur", actualInfo.typePurchased)
+                        saveToSharedPreferences(contexto, "condPur", actualInfo.condPurchased)
                     }
-                    val totPurP = retrieveFromSharedPreferences(contexto, "totPur")
-                    if (totPurP != null) {
-                        _totPur.postValue(totPurP!!)
-                    }
-                    val typePurP = retrieveFromSharedPreferences(contexto, "typePur")
-                    if (typePurP != null) {
-                        _typePur.postValue(typePurP!!)
-                    }
-                    val condPurP = retrieveFromSharedPreferences(contexto, "condPur")
-                    if (condPurP != null) {
-                        _condPur.postValue(condPurP!!)
+                }catch(e: Exception) {
+
+                    if (retrieveFromSharedPreferences(contexto, "numPur") == "") {
+                        _numPur.postValue("NO")
+                    } else {
+
+                        val numPurP = retrieveFromSharedPreferences(contexto, "numPur")
+                        if (numPurP != null) {
+                            _numPur.postValue(numPurP!!)
+                        }
+                        val totPurP = retrieveFromSharedPreferences(contexto, "totPur")
+                        if (totPurP != null) {
+                            _totPur.postValue(totPurP!!)
+                        }
+                        val typePurP = retrieveFromSharedPreferences(contexto, "typePur")
+                        if (typePurP != null) {
+                            _typePur.postValue(typePurP!!)
+                        }
+                        val condPurP = retrieveFromSharedPreferences(contexto, "condPur")
+                        if (condPurP != null) {
+                            _condPur.postValue(condPurP!!)
+                        }
                     }
                 }
-
-            }
-            connectivityReceiver.unregister()
         }
     }
 
