@@ -166,12 +166,33 @@ fun MyBodyHome2(homeViewModel: HomeViewModel){
                 )
             }
         } else {
-            Box(modifier = Modifier.height(screenHeight - 130.dp))
-            {
-                LazyVerticalGrid(columns = GridCells.Adaptive(minSize = 150.dp)) {
-                    items(data) { item ->
-                        ProductList2(item, homeViewModel)
+            val connectivityReceiver = remember { ConnectivityReceiver(context = contexto) }
+            connectivityReceiver.register()
+
+            if(connectivityReceiver.isOnline){
+                Box(modifier = Modifier.height(screenHeight - 130.dp))
+                {
+                    LazyVerticalGrid(columns = GridCells.Adaptive(minSize = 150.dp)) {
+                        items(data) { item ->
+                            ProductList2(item, homeViewModel)
+                        }
                     }
+                }
+            }
+            else
+            {
+                Box(modifier = Modifier.height(screenHeight - 175.dp))
+                {
+                    LazyVerticalGrid(columns = GridCells.Adaptive(minSize = 150.dp)) {
+                        items(data) { item ->
+                            ProductList2(item, homeViewModel)
+                        }
+                    }
+                }
+            }
+            DisposableEffect(key1 = connectivityReceiver) {
+                onDispose {
+                    connectivityReceiver.unregister()
                 }
             }
         }
@@ -339,14 +360,23 @@ fun ConnectionLost(context: Context) {
     val connectivityReceiver = remember { ConnectivityReceiver(context = context) }
     connectivityReceiver.register()
 
-    if (!connectivityReceiver.isOnline) {
-        AlertDialog(
-            onDismissRequest = {},
-            title = { Text("Disconnected!") },
-            text = { Text("No Internet Connection Found. Please connect again to use all features!") },
-            confirmButton = {},
-            dismissButton = {}
-        )
+    val openDialog = remember{ mutableStateOf(true) }
+
+    if (!connectivityReceiver.isOnline && openDialog.value == true) {
+        Box(
+            contentAlignment = Alignment.CenterEnd,
+            modifier = Modifier
+                .padding(end = 10.dp, top = 5.dp)
+                .fillMaxWidth()
+        ) {
+            Text(
+                text = "No Internet Connection Found. Please connect again to update information!",
+                style = MaterialTheme.typography.h6,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFFFB8500)
+            )
+        }
         Log.d("ConnectionEvent", "Lost connectivity")
     }
 
