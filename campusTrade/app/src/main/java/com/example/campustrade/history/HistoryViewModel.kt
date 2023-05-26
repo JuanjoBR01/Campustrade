@@ -6,6 +6,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.runtime.remember
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -45,7 +46,7 @@ class HistoryViewModel(private val repository: HistoryRepository): ViewModel() {
     val condPur : LiveData<String> = _condPur
 
     fun purchaseData(contexto: Context) = viewModelScope.launch{
-        
+
         withContext(Dispatchers.IO) {
 
             saveToSharedPreferences(contexto, "numPur", "")
@@ -53,19 +54,27 @@ class HistoryViewModel(private val repository: HistoryRepository): ViewModel() {
             saveToSharedPreferences(contexto, "typePur", "")
             saveToSharedPreferences(contexto, "condPur", "")
 
+            val connectivityReceiver = ConnectivityReceiver(context = contexto)
+            connectivityReceiver.register()
 
-            val actualInfo2 = repository.getPurchaseData()
-            if (actualInfo2 != null) {
-                val actualInfo = actualInfo2.get(0)
-                _numPur.postValue(actualInfo.numPurchases.toString())
-                _totPur.postValue(actualInfo.totalPurchased.toString())
-                _typePur.postValue(actualInfo.typePurchased)
-                _condPur.postValue(actualInfo.condPurchased)
+            if(connectivityReceiver.isOnline)
+            {
+                val actualInfo = repository.getPurchaseData()?.get(0)
+                if(actualInfo!=null) {
+                    _numPur.postValue(actualInfo.numPurchases.toString())
+                    _totPur.postValue(actualInfo.totalPurchased.toString())
+                    _typePur.postValue(actualInfo.typePurchased)
+                    _condPur.postValue(actualInfo.condPurchased)
 
-                saveToSharedPreferences(contexto, "numPur", actualInfo.numPurchases.toString())
-                saveToSharedPreferences(contexto, "totPur", actualInfo.totalPurchased.toString())
-                saveToSharedPreferences(contexto, "typePur", actualInfo.typePurchased)
-                saveToSharedPreferences(contexto, "condPur", actualInfo.condPurchased)
+                    saveToSharedPreferences(contexto, "numPur", actualInfo.numPurchases.toString())
+                    saveToSharedPreferences(
+                        contexto,
+                        "totPur",
+                        actualInfo.totalPurchased.toString()
+                    )
+                    saveToSharedPreferences(contexto, "typePur", actualInfo.typePurchased)
+                    saveToSharedPreferences(contexto, "condPur", actualInfo.condPurchased)
+                }
             } else {
                 if (retrieveFromSharedPreferences(contexto, "numPur") == "") {
                     _numPur.postValue("NO")
