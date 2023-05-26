@@ -99,6 +99,7 @@ class HistoryViewModel(private val repository: HistoryRepository): ViewModel() {
                 }
 
             }
+            connectivityReceiver.unregister()
         }
     }
 
