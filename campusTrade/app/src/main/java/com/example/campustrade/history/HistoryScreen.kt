@@ -56,7 +56,7 @@ fun MyBodyTransaction2(historyViewModel: HistoryViewModel){
     val configuration = LocalConfiguration.current
     val screenHeight = configuration.screenHeightDp.dp
 
-    val contexto = LocalContext.current.applicationContext
+    val contexto = LocalContext.current
 
     val numPur :String by historyViewModel.numPur.observeAsState(initial = "")
     val totPur :String by historyViewModel.totPur.observeAsState(initial = "")
