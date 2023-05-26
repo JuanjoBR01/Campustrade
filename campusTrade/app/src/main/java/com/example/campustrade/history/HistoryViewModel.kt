@@ -46,7 +46,12 @@ class HistoryViewModel(private val repository: HistoryRepository): ViewModel() {
 
     fun purchaseData(contexto: Context) = viewModelScope.launch{
 
-            withContext(Dispatchers.IO){
+        saveToSharedPreferences(contexto, "numPur", "")
+        saveToSharedPreferences(contexto, "totPur", "")
+        saveToSharedPreferences(contexto, "typePur", "")
+        saveToSharedPreferences(contexto, "condPur", "")
+
+
                 val actualInfo = repository.getPurchaseData()?.get(0)
                 if(actualInfo != null)
                 {
@@ -62,29 +67,31 @@ class HistoryViewModel(private val repository: HistoryRepository): ViewModel() {
                 }
                 else
                 {
-                    val numPurP = retrieveFromSharedPreferences(contexto, "numPur")
-                    if(numPurP != null)
+                    if(retrieveFromSharedPreferences(contexto, "numPur") == "")
                     {
-                        _numPur.postValue(numPurP!!)
+                        _numPur.postValue("NO")
                     }
-                    val totPurP = retrieveFromSharedPreferences(contexto, "totPur")
-                    if(totPurP != null)
-                    {
-                        _totPur.postValue(totPurP!!)
-                    }
-                    val typePurP = retrieveFromSharedPreferences(contexto, "typePur")
-                    if(typePurP != null)
-                    {
-                        _typePur.postValue(typePurP!!)
-                    }
-                    val condPurP = retrieveFromSharedPreferences(contexto, "condPur")
-                    if(condPurP != null)
-                    {
-                        _condPur.postValue(condPurP!!)
+                    else {
+
+                        val numPurP = retrieveFromSharedPreferences(contexto, "numPur")
+                        if (numPurP != null) {
+                            _numPur.postValue(numPurP!!)
+                        }
+                        val totPurP = retrieveFromSharedPreferences(contexto, "totPur")
+                        if (totPurP != null) {
+                            _totPur.postValue(totPurP!!)
+                        }
+                        val typePurP = retrieveFromSharedPreferences(contexto, "typePur")
+                        if (typePurP != null) {
+                            _typePur.postValue(typePurP!!)
+                        }
+                        val condPurP = retrieveFromSharedPreferences(contexto, "condPur")
+                        if (condPurP != null) {
+                            _condPur.postValue(condPurP!!)
+                        }
                     }
 
                 }
-            }
     }
 
     fun getSharedPreferences(context: Context): SharedPreferences {
