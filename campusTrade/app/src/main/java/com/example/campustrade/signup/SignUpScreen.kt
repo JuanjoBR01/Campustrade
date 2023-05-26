@@ -33,9 +33,10 @@ import com.example.campustrade.ui.theme.darkBlue
 import com.example.campustrade.ui.theme.orange
 import com.example.campustrade.ui.theme.white
 import android.content.Context
+import android.os.Build
 import android.os.Environment
 import android.util.Log
-import androidx.activity.viewModels
+import androidx.annotation.RequiresApi
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
 import androidx.core.content.FileProvider
@@ -43,7 +44,6 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.campustrade.ConnectivityReceiver
 import com.example.campustrade.R
 import com.example.campustrade.data.Resource
-import com.example.campustrade.data.database.daos.UserDao
 import com.example.campustrade.home.HomeActivityMVVM
 import com.example.campustrade.login.LoginScreen
 import com.example.campustrade.repository.AuthenticationRepository
@@ -59,6 +59,7 @@ class SignUpScreen : ComponentActivity() {
 
     //private val viewModel by viewModels<SignUpViewModel>()
     private val viewModel = SignUpViewModel(AuthenticationRepository(FirebaseAuth.getInstance()))
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -70,6 +71,7 @@ class SignUpScreen : ComponentActivity() {
 
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun SignUpScreenComposable(modifier: Modifier = Modifier, viewModel: SignUpViewModel) {
@@ -85,6 +87,9 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier, viewModel: SignUpViewM
     val context = LocalContext.current
 
     val signUpFlow = viewModel?.signUpFlow?.collectAsState()
+
+    val connectivityReceiver = remember { ConnectivityReceiver(context = context) }
+    connectivityReceiver.register()
 
 
 
@@ -114,16 +119,20 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier, viewModel: SignUpViewM
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
-    ){
+    ) {
 
         TopAppBar(
-            title = { Text(
-                stringResource(R.string.sign_up_top_bar_text),
-                style = MaterialTheme.typography.h2) },
+            title = {
+                Text(
+                    stringResource(R.string.sign_up_top_bar_text),
+                    style = MaterialTheme.typography.h2
+                )
+            },
             modifier = modifier,
             navigationIcon = {
                 IconButton(
-                    onClick = { val intent = Intent(context, LoginScreen::class.java)
+                    onClick = {
+                        val intent = Intent(context, LoginScreen::class.java)
                         context.startActivity(intent)
                     }
                 ) {
@@ -154,36 +163,40 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier, viewModel: SignUpViewM
         TextBoxField(
             nameField,
             {
-                    if(it.length < 51) {
-                        viewModel.onNameChange(it)
-                    }
+                if (it.length < 51) {
+                    viewModel.onNameChange(it)
+                }
             },
             stringResource(id = R.string.name_sign_up_form),
-            VisualTransformation.None)
+            VisualTransformation.None
+        )
 
         Spacer(modifier = Modifier.height(10.dp))
 
         TextBoxField(
             emailField,
-            {newValue ->
-                if (newValue.length <41){
+            { newValue ->
+                if (newValue.length < 41) {
                     viewModel.onEmailChange(newValue)
-                }},
+                }
+            },
             label = stringResource(id = R.string.email_sign_up_form),
             VisualTransformation.None
         )
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        Column(modifier = Modifier
-            .padding(start = 32.dp, end = 32.dp, bottom = 10.dp)){
+        Column(
+            modifier = Modifier
+                .padding(start = 32.dp, end = 32.dp, bottom = 10.dp)
+        ) {
             OutlinedTextField(
                 value = valueType,
                 onValueChange = {
-                    if (it.length < 41){
+                    if (it.length < 41) {
                         viewModel.onValueTypeChange(it)
                     }
-                                },
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .onGloballyPositioned { //coordinates ->
@@ -191,9 +204,10 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier, viewModel: SignUpViewM
                         // the DropDown the same width
                         // mTextFieldSize = coordinates.size.toSize()
                     },
-                label = {Text("Label")},
+                label = { Text("Label") },
                 trailingIcon = {
-                    Icon(painter = painterResource(id = R.drawable.baseline_expand_more_black_48),"contentDescription",
+                    Icon(painter = painterResource(id = R.drawable.baseline_expand_more_black_48),
+                        "contentDescription",
                         Modifier.clickable { viewModel.onExpandedChange() })
                 }
             )
@@ -211,69 +225,79 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier, viewModel: SignUpViewM
                         viewModel.onValueTypeChange(label)
                         viewModel.setExpandedFalse()
                     }) {
-                        Text(text = label,
+                        Text(
+                            text = label,
                             modifier
                                 .fillMaxSize(),
                             style = MaterialTheme.typography.body1,
-                            color = Color.Black)
+                            color = Color.Black
+                        )
                     }
                 }
             }
         }
 
 
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(15.dp))
 
         TextBoxField(
             secretField,
-            {newValue ->
+            { newValue ->
                 if (newValue.length < 51) {
                     viewModel.onPasswordChange(newValue)
-                }},
+                }
+            },
             label = stringResource(id = R.string.password_sign_up_form),
-            PasswordVisualTransformation())
+            PasswordVisualTransformation()
+        )
 
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(15.dp))
 
-        TextBoxField(confirmSecretField,
-            {newValue ->
+        TextBoxField(
+            confirmSecretField,
+            { newValue ->
                 if (newValue.length < 51) {
                     viewModel.onConfirmPasswordChange(newValue)
-                }},
+                }
+            },
             label = stringResource(id = R.string.confirm_password_sign_up_form),
-            PasswordVisualTransformation())
+            PasswordVisualTransformation()
+        )
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(15.dp))
 
 
+        NoInternetText(context = context)
 
         Button(
             onClick = {
-                var mes: String
-                if (secretField.length < 6 || confirmSecretField.length < 6) {
-                    mes = "The password needs at least 6 characters"
-                } else if (secretField != confirmSecretField) {
-                    mes = "The password fields do not match"
-                } else if (!Patterns.EMAIL_ADDRESS.matcher(emailField).matches()) {
-                    mes = "Enter a valid email"
-                } else if (nameField.isEmpty()) {
-                    mes = "Enter a valid name"
-                } else if (contentImage.value == null){
-                    mes = "Please take a photo"
-                } else {
-                    mes = "Uploading info..."
-                    viewModel?.uploadImage(context, contentImage.value, valueType, nameField, emailField, secretField)
+                if (connectivityReceiver.isOnline) {
+                    var mes: String
+                    if (secretField.length < 6 || confirmSecretField.length < 6) {
+                        mes = "The password needs at least 6 characters"
+                    } else if (secretField != confirmSecretField) {
+                        mes = "The password fields do not match"
+                    } else if (!Patterns.EMAIL_ADDRESS.matcher(emailField).matches()) {
+                        mes = "Enter a valid email"
+                    } else if (nameField.isEmpty()) {
+                        mes = "Enter a valid name"
+                    } else if (contentImage.value == null){
+                        mes = "Please take a photo"
+                    } else {
+                        mes = "Uploading info..."
+                        viewModel?.uploadImage(context, contentImage.value, valueType, nameField, emailField, secretField)
 
 
-                    viewModel.restartForm()
+                        viewModel.restartForm()
+                    }
+
+
+                    Toast.makeText(
+                        context,
+                        mes,
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
-
-
-                Toast.makeText(
-                    context,
-                    mes,
-                    Toast.LENGTH_LONG
-                ).show()
 
 
 
@@ -315,8 +339,6 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier, viewModel: SignUpViewM
             }
         ) { }
 
-        NoInternetDialog(context)
-
         signUpFlow?.value?.let {
             when(it) {
                 is Resource.Failure ->{
@@ -336,6 +358,12 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier, viewModel: SignUpViewM
                 Resource.PastFailure -> {
                     println("Just failed")
                 }
+            }
+        }
+
+        DisposableEffect(key1 = connectivityReceiver) {
+            onDispose {
+                connectivityReceiver.unregister()
             }
         }
 
@@ -452,27 +480,24 @@ private fun BottomActionItem2(modifier: Modifier = Modifier, title:String, resou
             contentScale = ContentScale.Inside
         )
 
-        Spacer(modifier = modifier.width(10.dp))
-
         Text(text = title, modifier = modifier.align(Alignment.CenterVertically))
     }
 
 }
 
-
 @Composable
-fun NoInternetDialog(context: Context) {
+fun NoInternetText(context: Context) {
     val connectivityReceiver = remember { ConnectivityReceiver(context = context) }
     connectivityReceiver.register()
 
     if (!connectivityReceiver.isOnline) {
-        AlertDialog(
-            onDismissRequest = {},
-            title = { Text("Disconnected!") },
-            text = { Text("Oops! You aren't connected to internet, so we won't be able to process you signup request :(") },
-            confirmButton = {},
-            dismissButton = {}
-        )
+        Text(text = "Disconnected, please check your internet connection!",
+            color = Color.Red,
+            style = MaterialTheme.typography.body2,
+
+            )
+        Spacer(modifier = Modifier.height(20.dp))
+
         Log.d("ConnectionEvent", "Houston, we lost connectivity")
     }
 

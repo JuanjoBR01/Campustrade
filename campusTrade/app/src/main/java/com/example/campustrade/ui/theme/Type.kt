@@ -46,6 +46,11 @@ val Typography = Typography(
         fontFamily = InriaSans,
         fontWeight = FontWeight.Bold,
         fontSize = 20.sp
+    ),
+    body2 = TextStyle(
+        fontFamily = InriaSans,
+        fontWeight = FontWeight.Bold,
+        fontSize = 15.sp
     )
 )
 /* Other default text styles to override

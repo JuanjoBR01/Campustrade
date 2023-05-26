@@ -144,7 +144,7 @@ fun MyBodyHome2(homeViewModel: HomeViewModel){
 
     //val productList = homeViewModel.arrangeProductList(value)
 
-    ConnectionLost(context = contexto)
+    //ConnectionLost(context = contexto)
 
         val data: List<ProductDB> by homeViewModel.productList.observeAsState(emptyList())
 
