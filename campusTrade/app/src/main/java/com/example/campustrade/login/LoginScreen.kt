@@ -38,12 +38,12 @@ import com.google.firebase.auth.FirebaseAuth
 import android.content.Context
 import android.os.Build
 import android.util.Log
-import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import com.example.campustrade.ConnectivityReceiver
 
 class LoginScreen : ComponentActivity() {
     //private val viewModel by viewModels<LoginViewModel>()
+    @RequiresApi(Build.VERSION_CODES.O)
     private val viewModel = LoginViewModel(AuthenticationRepository(FirebaseAuth.getInstance()))
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -68,9 +68,14 @@ fun LoginScreenComposable(modifier: Modifier = Modifier, viewModel: LoginViewMod
     val passwordField: String by viewModel.password.observeAsState(initial = "")
     val loginEnable: Boolean by viewModel.loginEnable.observeAsState(initial = false)
     val signupEnabled: Boolean by viewModel.signupEnable.observeAsState(initial = true)
+    val launchedTime: Boolean by viewModel.launchedTime.observeAsState(initial = false)
     val loginFlow = viewModel.loginFlow.collectAsState()
 
     val context = LocalContext.current
+
+    val connectivityReceiver = remember { ConnectivityReceiver(context = context) }
+    connectivityReceiver.register()
+
 
 
     Column (
@@ -140,7 +145,10 @@ fun LoginScreenComposable(modifier: Modifier = Modifier, viewModel: LoginViewMod
 
         Button(
             onClick = {
-                      viewModel.login(emailField, passwordField)
+                if(connectivityReceiver.isOnline) {
+                    viewModel.login(emailField, passwordField, context)
+                }
+
             },
             colors = ButtonDefaults.buttonColors(
                 backgroundColor = orange,
@@ -183,6 +191,8 @@ fun LoginScreenComposable(modifier: Modifier = Modifier, viewModel: LoginViewMod
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        NoInternetText(context = context)
+
         Image(
             modifier = Modifier
                 .size(175.dp)
@@ -190,10 +200,9 @@ fun LoginScreenComposable(modifier: Modifier = Modifier, viewModel: LoginViewMod
                 .align(Alignment.CenterHorizontally),
             painter = painterResource(R.drawable.logo_cubito_cuadrado),
             contentDescription = stringResource(id = R.string.cube_logo),
-
             )
 
-        NoInternetDialog(context = context)
+
 
         loginFlow.value?.let {
             when(it) {
@@ -217,23 +226,36 @@ fun LoginScreenComposable(modifier: Modifier = Modifier, viewModel: LoginViewMod
             }
         }
 
+        if (!launchedTime) {
+            viewModel.uploadLaunchTime()
+            viewModel.launched()
+        }
+
+        DisposableEffect(key1 = connectivityReceiver) {
+            onDispose {
+                connectivityReceiver.unregister()
+            }
+        }
+
+
     }
 
 }
 
+
 @Composable
-fun NoInternetDialog(context: Context) {
+fun NoInternetText(context: Context) {
     val connectivityReceiver = remember { ConnectivityReceiver(context = context) }
     connectivityReceiver.register()
 
     if (!connectivityReceiver.isOnline) {
-        AlertDialog(
-            onDismissRequest = {},
-            title = { Text("Disconnected!") },
-            text = { Text("Oops! You aren't connected to internet, so we won't be able to process you login request :(") },
-            confirmButton = {},
-            dismissButton = {}
-        )
+        Text(text = "Disconnected, please check your internet connection!", 
+            color = Color.Red,
+            style = MaterialTheme.typography.body2,
+
+            )
+        Spacer(modifier = Modifier.height(24.dp))
+
         Log.d("ConnectionEvent", "Houston, we lost connectivity")
     }
 

@@ -1,5 +1,6 @@
 package com.example.campustrade.profile
 
+import android.content.Context
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
@@ -19,7 +20,7 @@ class UsersRepository {
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    suspend fun updateDate(email: String, newDate: String) {
+    fun updateDate(email: String, newDate: String, context: Context) {
 
         val collec = db.collection("users")
         val query = collec.whereEqualTo("email", email)
@@ -46,11 +47,29 @@ class UsersRepository {
 
                     CurrentUser.user = UserObj(name!!, email, tag!!, image!!, newDate)
 
-
-
+                    updateSharedPreferences(context)
 
                 }
             }
+    }
+
+    fun updateSharedPreferences(context: Context) {
+        val sharedPreferences = context.getSharedPreferences("logged_user_preferences", Context.MODE_PRIVATE)
+
+        val currentUser = CurrentUser.user
+
+        val em  = currentUser!!.email
+        val nn  = currentUser!!.name
+        val tag  = currentUser!!.tag
+        val url = currentUser!!.image
+
+        val editor = sharedPreferences.edit()
+        editor.putString("email", em)
+        editor.putString("name", nn)
+        editor.putString("tag", tag)
+        editor.putString("image", url)
+        editor.apply()
+
     }
 
 

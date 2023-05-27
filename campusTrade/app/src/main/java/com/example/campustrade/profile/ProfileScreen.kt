@@ -1,6 +1,8 @@
 package com.example.campustrade.profile
 
+import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -11,7 +13,6 @@ import androidx.compose.material.*
 import androidx.compose.material.Icon
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.campustrade.ui.theme.CampustradeTheme
@@ -35,9 +36,19 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Alignment.Companion.Start
+import androidx.compose.ui.draw.rotate
+import coil.compose.rememberImagePainter
 import com.example.campustrade.objects.CurrentUser
 import com.example.campustrade.ui.theme.orange
-import org.checkerframework.checker.units.qual.Current
+
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.graphics.painter.Painter
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.RequestOptions
+import java.util.concurrent.ExecutionException
+
 
 
 class ProfileScreen : ComponentActivity() {
@@ -57,12 +68,13 @@ class ProfileScreen : ComponentActivity() {
 fun ProfileScreenComposable(modifier: Modifier = Modifier) {
 
     val context = LocalContext.current
-    //val nameField by remember { mutableStateOf("Lionel Messi")    }
-    //val emailField by remember { mutableStateOf("l.messi@uniandes.edu.co")    }
 
-    val nameField = CurrentUser.user!!.name
-    val emailField = CurrentUser.user!!.email
+    val sharedPreferences = context.getSharedPreferences("logged_user_preferences", Context.MODE_PRIVATE)
 
+    val nameField = sharedPreferences.getString("name", "     ")
+    val emailField = sharedPreferences.getString("email", "     ")
+    val imageUrl = sharedPreferences.getString("image", "     ")
+    val tagField = sharedPreferences.getString("tag", "     ")
 
 
     Column(
@@ -103,19 +115,28 @@ fun ProfileScreenComposable(modifier: Modifier = Modifier) {
         ) {
             Box(
                 modifier = Modifier
-                    .background(Color(0xFF8ECAE6))
+                    .background(Color(0xFFFFFFFF))
                     .height(120.dp)
                     .width(120.dp)
             ) {
+
                 Image(
-                    painter = painterResource(id = R.drawable.sampleuser),
-                    contentDescription = null,
-                    modifier = modifier
-                        .height(110.dp)
-                        .width(110.dp)
-                        .background(color = Color.Transparent)
-                        .align(Alignment.Center)
+                    painter = rememberImagePainter(
+                        data = imageUrl,
+                        builder = {
+                            crossfade(true)
+                            placeholder(R.drawable.programmer)
+                            error(R.drawable.sampleuser)
+                        }
+                    ),
+                    contentDescription = "Imagen",
+                    modifier = Modifier.rotate(90f).height(120.dp)
                 )
+
+
+
+
+
 
             }
 
@@ -124,14 +145,14 @@ fun ProfileScreenComposable(modifier: Modifier = Modifier) {
                     .fillMaxWidth()
                     .align(CenterVertically)
                 ){
-                Text(text = if (nameField.length > 20) nameField.substring(0,17) + "..." else nameField,
+                Text(text = if (nameField!!.length > 20) nameField.substring(0,17) + "..." else nameField,
                     style = MaterialTheme.typography.h4,
                     modifier = Modifier.align(CenterHorizontally)
                 )
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                Text(text = if (emailField.substring(0,emailField.indexOf("@")).length > 20) emailField.substring(0,17) + "..." else emailField.substring(0,emailField.indexOf("@")),
+                Text(text = if (emailField!!.substring(0,emailField.indexOf("@")).length > 20) emailField.substring(0,17) + "..." else emailField.substring(0,emailField.indexOf("@")),
                     style = MaterialTheme.typography.h5,
                     modifier = Modifier.align(CenterHorizontally)
                 )
@@ -269,7 +290,7 @@ fun ProfileScreenComposable(modifier: Modifier = Modifier) {
                         .padding(start = 25.dp, end = 10.dp)
                 )
 
-                Text(text = CurrentUser.user!!.tag,
+                Text(text = tagField!!,
                     style = MaterialTheme.typography.h5,
                     modifier = Modifier
                         .padding(start = 25.dp, end = 10.dp)

@@ -4,20 +4,25 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.campustrade.data.Resource
 import com.example.campustrade.objects.FirebaseClient
+import com.example.campustrade.objects.SuHashMap.suMap
 import com.example.campustrade.repository.AuthRepository
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.util.*
 import javax.inject.Inject
@@ -52,6 +57,8 @@ class SignUpViewModel @Inject constructor(
     private val creationRepository = SignUpRepository(FirebaseClient.fireStore)
 
 
+
+
     fun onExpandedChange() {
         _expanded.value = _expanded.value != true
     }
@@ -66,10 +73,12 @@ class SignUpViewModel @Inject constructor(
 
     fun onNameChange(nn: String) {
         _name.value = nn
+        suMap["nn"] = nn
     }
 
     fun onEmailChange(em: String) {
         _email.value = em
+        suMap["em"] = em
     }
 
     fun onPasswordChange(pw: String) {
@@ -81,43 +90,57 @@ class SignUpViewModel @Inject constructor(
     }
 
 
-    private fun createUser(vt: String, nn: String, em: String, pw: String, imgUrl: String) = viewModelScope.launch {
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun createUser(vt: String, nn: String, em: String, pw: String, imgUrl: String) = viewModelScope.launch (Dispatchers.IO){
         creationRepository.createUser(vt, nn, em, pw, imgUrl)
+    }
+
+    init {
+        if (suMap["nn"] == null) {
+            suMap["nn"] = ""
+        }
+        if (suMap["em"] == null) {
+            suMap["em"] = ""
+        }
+
+        _name.value = suMap["nn"]
+        _email.value = suMap["em"]
 
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     fun uploadImage(context: Context, contentImage: Uri?, vt: String, nn: String, em: String, pw: String) = viewModelScope.launch {
         _signUpFlow.value = Resource.Loading
-        val result = repository.signup(nn, em, pw)
-        repository.login(em, pw)
-        _signUpFlow.value = result
 
-        val storageRef = Firebase.storage.reference
-        //Transform to bitmap
-        val inputStream = context.contentResolver.openInputStream(contentImage!!)
-        val bitmp: Bitmap = BitmapFactory.decodeStream(inputStream)
-        //Bitmap to bytes
-        val outputStream = ByteArrayOutputStream()
-        bitmp.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
-        val bytes = outputStream.toByteArray()
-        //Create variable to store url
-        var imgUrl: String
-        //Upload to DB
-        val storeR = storageRef.child("images/${UUID.randomUUID()}")
-        val uploadTask = storeR.putBytes(bytes)
-        uploadTask.addOnSuccessListener {
-            storeR.downloadUrl.addOnSuccessListener { uri ->
-                imgUrl = uri.toString()
-                createUser(vt, nn, em, pw, imgUrl)
+        withContext(Dispatchers.IO) {
+            val result = repository.signup(nn, em, pw)
+            repository.login(em, pw)
+            _signUpFlow.value = result
 
+            val storageRef = Firebase.storage.reference
+            //Transform to bitmap
+            val inputStream = context.contentResolver.openInputStream(contentImage!!)
+            val bitmp: Bitmap = BitmapFactory.decodeStream(inputStream)
+            //Bitmap to bytes
+            val outputStream = ByteArrayOutputStream()
+            bitmp.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
+            val bytes = outputStream.toByteArray()
+            //Create variable to store url
+            var imgUrl: String
+            //Upload to DB
+            val storeR = storageRef.child("images/${UUID.randomUUID()}")
+            val uploadTask = storeR.putBytes(bytes)
+            uploadTask.addOnSuccessListener {
+                storeR.downloadUrl.addOnSuccessListener { uri ->
+                    imgUrl = uri.toString()
+                    createUser(vt, nn, em, pw, imgUrl)
+
+                }
             }
         }
     }
 
     fun restartForm() {
-        _valueType.value = ""
-        _name.value = ""
-        _email.value = ""
         _password.value = ""
         _confirmPassword.value = ""
     }
