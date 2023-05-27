@@ -112,6 +112,7 @@ fun noInternetDialog(viewModel: PublishViewModel) {
     val isConnected: Boolean by viewModel.networkState.observeAsState(initial = false)
 
     if (!isConnected) {
+
         AlertDialog(
             onDismissRequest = {},
             title = { Text("No Internet Connection") },
