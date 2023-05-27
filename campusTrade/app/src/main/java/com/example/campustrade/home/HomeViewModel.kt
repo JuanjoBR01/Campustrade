@@ -18,8 +18,10 @@ import com.example.campustrade.history.HistoryRepository
 import com.example.campustrade.objects.CurrentUser
 import com.example.campustrade.profile.ProfileScreen
 import com.example.campustrade.publish.PublishScreen
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.*
@@ -130,92 +132,73 @@ class HomeViewModel(private val repository: HomeRepository, private val historyR
         return sharedPreferences.getString(key, null)
     }
 
-    fun arrangeProductListFirestore(search: String, preference: String){
+    fun arrangeProductListFirestore(search: String, preference: String) = viewModelScope.launch{
         var productList = arrayListOf<ProductDB>()
         var finalList = arrayListOf<ProductDB>()
 
-        runBlocking{
-            launch{
-                val actualList = repository.getData()
+        withContext(Dispatchers.IO) {
+            val actualList = repository.getData()
 
-                val userList = historyRepository.getData()
+            val userList = historyRepository.getData()
 
-                var preferenceResp = preference
+            var preferenceResp = preference
 
-                var contAcc = 0
-                var contPro = 0
-                var contMat = 0
-                var contOth = 0
+            var contAcc = 0
+            var contPro = 0
+            var contMat = 0
+            var contOth = 0
 
-                userList.forEach{producto ->
-                    if(producto.type == "Accesory")
-                    {
-                        contAcc++
-                    }
-                    else if(producto.type == "Material")
-                    {
-                        contMat++
-                    }
-                    else if(producto.type == "Product")
-                    {
-                        contPro++
-                    }
-                    else{
-                        contOth++
-                    }
+            userList.forEach { producto ->
+                if (producto.type == "Accesory") {
+                    contAcc++
+                } else if (producto.type == "Material") {
+                    contMat++
+                } else if (producto.type == "Product") {
+                    contPro++
+                } else {
+                    contOth++
                 }
-
-                if(contAcc >= contPro && contAcc >= contMat && contAcc >= contOth)
-                {
-                    preferenceResp = "Accesory"
-                }
-                else if(contPro >= contAcc && contPro >= contMat && contPro >= contOth)
-                {
-                    preferenceResp = "Product"
-                }
-                else if(contMat >= contAcc && contMat >= contPro && contMat >= contOth)
-                {
-                    preferenceResp = "Product"
-                }
-                else
-                {
-                    preferenceResp = "Other"
-                }
-
-
-
-                //val preference = "Used"
-                val strategy = StrategyContext(SortingProductsStrategyType())
-
-                //val strategy = SortingProductsStrategyType()
-
-                if(preference == "Used"){
-                    strategy.setStrategy(SortingProductsStrategyCondition())
-                    preferenceResp = "Used"
-                }
-                if(preference == "New"){
-                    strategy.setStrategy(SortingProductsStrategyCondition())
-                    preferenceResp = "New"
-                }
-
-                productList = strategy.executeStrategy(preferenceResp, actualList)
-
-
-                if(search != "")
-                {
-                    productList.forEach { producto ->
-                        if(producto.name.contains(search))
-                        {
-                            finalList.add(producto)
-                        }
-                    }
-                }
-                else{
-                    finalList = productList
-                }
-
-                _productList.value =  finalList
             }
+
+            if (contAcc >= contPro && contAcc >= contMat && contAcc >= contOth) {
+                preferenceResp = "Accesory"
+            } else if (contPro >= contAcc && contPro >= contMat && contPro >= contOth) {
+                preferenceResp = "Product"
+            } else if (contMat >= contAcc && contMat >= contPro && contMat >= contOth) {
+                preferenceResp = "Product"
+            } else {
+                preferenceResp = "Other"
+            }
+
+
+            //val preference = "Used"
+            val strategy = StrategyContext(SortingProductsStrategyType())
+
+            //val strategy = SortingProductsStrategyType()
+
+            if (preference == "Used") {
+                strategy.setStrategy(SortingProductsStrategyCondition())
+                preferenceResp = "Used"
+            }
+            if (preference == "New") {
+                strategy.setStrategy(SortingProductsStrategyCondition())
+                preferenceResp = "New"
+            }
+
+            productList = strategy.executeStrategy(preferenceResp, actualList)
+
+
+            if (search != "") {
+                productList.forEach { producto ->
+                    if (producto.name.contains(search)) {
+                        finalList.add(producto)
+                    }
+                }
+            } else {
+                finalList = productList
+            }
+
+            _productList.postValue(finalList)
         }
     }
 
