@@ -3,6 +3,8 @@ package com.example.campustrade.home
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.graphics.Color
@@ -13,6 +15,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.campustrade.*
+import com.example.campustrade.explore.ExploreScreen
 import com.example.campustrade.history.HistoryActivity
 import com.example.campustrade.history.HistoryRepository
 import com.example.campustrade.objects.CurrentUser
@@ -274,9 +277,15 @@ class HomeViewModel(private val repository: HomeRepository, private val historyR
             val intent = Intent(context, ProfileScreen::class.java)
             context.startActivity(intent)
         }
+        else if(name == "Explore")
+        {
+            val intent = Intent(context, ExploreScreen::class.java)
+            context.startActivity(intent)
+        }
 
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     fun getDiscount(): Int {
         val date = LocalDate.now()
         val dayOfWeek = date.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.ENGLISH)

@@ -88,6 +88,12 @@
             android:label="@string/title_activity_profile"
             android:theme="@style/Theme.Campustrade" />
         <activity
+            android:name=".explore.ExploreScreen"
+            android:screenOrientation="portrait"
+            android:exported="false"
+            android:label="@string/title_activity_profile"
+            android:theme="@style/Theme.Campustrade" />
+        <activity
             android:name=".MainActivity"
             android:screenOrientation="portrait"
             android:exported="true"
