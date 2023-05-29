@@ -33,7 +33,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Text
-import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Alignment.Companion.Start
 import androidx.compose.ui.draw.rotate
@@ -42,12 +41,6 @@ import com.example.campustrade.objects.CurrentUser
 import com.example.campustrade.ui.theme.orange
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.painter.BitmapPainter
-import androidx.compose.ui.graphics.painter.Painter
-import com.bumptech.glide.Glide
-import com.bumptech.glide.request.RequestOptions
-import java.util.concurrent.ExecutionException
 
 
 

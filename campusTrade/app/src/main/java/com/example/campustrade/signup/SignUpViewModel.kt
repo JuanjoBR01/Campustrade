@@ -13,6 +13,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.campustrade.data.Resource
 import com.example.campustrade.objects.FirebaseClient
 import com.example.campustrade.objects.SuHashMap.suMap
+import com.example.campustrade.profile.UsersRepository
 import com.example.campustrade.repository.AuthRepository
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.ktx.Firebase
@@ -24,6 +25,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
+import java.time.LocalDateTime
 import java.util.*
 import javax.inject.Inject
 
@@ -55,6 +57,8 @@ class SignUpViewModel @Inject constructor(
     val signUpFlow: StateFlow<Resource<FirebaseUser>?> = _signUpFlow
 
     private val creationRepository = SignUpRepository(FirebaseClient.fireStore)
+
+    private val usersRepository = UsersRepository()
 
 
 
@@ -110,6 +114,7 @@ class SignUpViewModel @Inject constructor(
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun uploadImage(context: Context, contentImage: Uri?, vt: String, nn: String, em: String, pw: String) = viewModelScope.launch {
+        usersRepository.updateSharedPreferences(context)
         _signUpFlow.value = Resource.Loading
 
         withContext(Dispatchers.IO) {
@@ -134,6 +139,9 @@ class SignUpViewModel @Inject constructor(
                 storeR.downloadUrl.addOnSuccessListener { uri ->
                     imgUrl = uri.toString()
                     createUser(vt, nn, em, pw, imgUrl)
+                    val accessDate = LocalDateTime.now()
+                    val accessString = "${accessDate.dayOfMonth}/${accessDate.monthValue}/${accessDate.year} - ${accessDate.hour}:${accessDate.minute}"
+                    usersRepository.updateDate(em, accessString, context)
 
                 }
             }
