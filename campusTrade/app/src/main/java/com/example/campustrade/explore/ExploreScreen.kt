@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Geocoder
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -16,6 +17,7 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
@@ -28,6 +30,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import com.example.campustrade.R
+import com.example.campustrade.data.Resource
 import com.example.campustrade.home.HomeActivityMVVM
 import com.example.campustrade.ui.theme.*
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -42,7 +45,7 @@ class ExploreScreen : ComponentActivity() {
 
         setContent {
             CampustradeTheme{
-                ExploreScreenComposable()
+                ExploreScreenComposable(viewModel = ExploreViewModel())
             }
         }
     }
@@ -52,14 +55,17 @@ class ExploreScreen : ComponentActivity() {
 @Composable
 @OptIn(ExperimentalPermissionsApi::class)
 
-fun ExploreScreenComposable(modifier: Modifier = Modifier) {
+fun ExploreScreenComposable(modifier: Modifier = Modifier, viewModel: ExploreViewModel) {
 
     val context = LocalContext.current
     var locationText by remember { mutableStateOf("") }
     var city by remember { mutableStateOf("") }
     var neighbourhood by remember { mutableStateOf("") }
     val fusedLocationClient = LocationServices.getFusedLocationProviderClient(LocalContext.current)
-    val neighborhoodName = remember { mutableStateOf("") }
+
+    val mapButtonEnabled: Boolean by viewModel.mapButtonEnabled.observeAsState(initial = true)
+    val distributorsList = viewModel.distributors.collectAsState()
+    val loginFlow = viewModel.loginFlow.collectAsState()
 
 
     Column(
@@ -147,7 +153,9 @@ fun ExploreScreenComposable(modifier: Modifier = Modifier) {
                                 neighbourhood = getNeighbourhoodName(latitude, longitude, context)
                             }
                         }
-                    }
+                        viewModel.getDistributors(context)
+                    },
+                    enabled = mapButtonEnabled
                 ) {
                     Text(text = "EXPLORE MAP")
                 }
@@ -163,7 +171,30 @@ fun ExploreScreenComposable(modifier: Modifier = Modifier) {
 
             }
         }
+        loginFlow.value?.let {
+            when(it) {
+                is Resource.Failure ->{
+                    val context = LocalContext.current
+                    Toast.makeText(context, it.exception.message, Toast.LENGTH_SHORT).show()
+                }
+                is Resource.Loading -> {
+                    CircularProgressIndicator(Modifier.align(Alignment.CenterHorizontally))
+
+                }
+                is Resource.Success -> {
+                    LaunchedEffect(Unit) {
+                        val intent = Intent(context, MapScreen::class.java)
+                        context.startActivity(intent)
+                    }
+                }
+                Resource.PastFailure -> {
+                    println("Just failed")
+                }
+            }
+        }
     }
+
+
 }
 
 
@@ -261,6 +292,6 @@ fun getNeighbourhoodName(latitude: Double, longitude: Double, context: Context):
 @Composable
 fun ExploreScreenPreview() {
     CampustradeTheme {
-        ExploreScreenComposable()
+        ExploreScreenComposable(viewModel = ExploreViewModel())
     }
 }

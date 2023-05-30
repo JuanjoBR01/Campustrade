@@ -5,4 +5,6 @@ data class Distributor(
     val tag: String,
     val latitude: Double,
     val longitude: Double
-)
+) {
+    constructor(): this("","",4.601748588265035, -74.06621857886229)
+}

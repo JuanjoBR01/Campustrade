@@ -10,9 +10,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.campustrade.ui.theme.CampustradeTheme
+import com.google.android.gms.maps.model.CameraPosition
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.Marker
 import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.CameraPositionState
 
 
 class MapScreen : ComponentActivity() {
@@ -51,7 +53,12 @@ fun MapScreenComposable(modifier: Modifier = Modifier) {
             .padding(top = 30.dp)
     ) {
 
-        GoogleMap(modifier = Modifier.fillMaxSize()) {
+        GoogleMap(modifier = Modifier.fillMaxSize(),
+            cameraPositionState = CameraPositionState(
+                position = CameraPosition(
+                    LatLng(4.72999875725272, -74.0361344658211),
+                    15f, 0f,0f))
+        ) {
             for (marker in markers) {
                 Marker(position = marker)
             }
