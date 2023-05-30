@@ -387,7 +387,6 @@ fun TextBoxField(value: String, onValueChange: (String) -> Unit, label: String, 
             unfocusedBorderColor = darkBlue),
         modifier = Modifier.width(350.dp),
         visualTransformation = visualTransformation
-
     )
 
 }
@@ -522,20 +521,21 @@ private fun FeatureThatRequiresPermissions() {
         val cameraPermissionState = rememberPermissionState(
             Manifest.permission.CAMERA
         )
-        getPermission(perm = cameraPermissionState)
+        GetPermission(perm = cameraPermissionState)
     }
 
 }
 
 @ExperimentalPermissionsApi
 @Composable
-private fun getPermission(
+private fun GetPermission(
     perm: PermissionState
 ) {
     if(perm.hasPermission){
         print("Permission already granted")
     }
     else{
+
         Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally) {
             Button(
