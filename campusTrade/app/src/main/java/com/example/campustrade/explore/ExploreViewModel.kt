@@ -9,6 +9,7 @@ import com.example.campustrade.data.Resource
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import com.example.campustrade.dtos.Distributor
+import com.example.campustrade.objects.Coordinates
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext
@@ -36,9 +37,10 @@ class ExploreViewModel (): ViewModel(){
             _distributors.value = result
 
             if (result.isNotEmpty()) {
+                Coordinates.distributors = result
                 _loginFlow.value = Resource.Success(true)
             } else {
-                _loginFlow.value = Resource.Failure(Exception("The distributors couldn't be retrieved"))
+                _loginFlow.value = Resource.Failure(Exception("The distributors couldn't be retrieved!"))
             }
         }
         _mapButtonEnabled.value = true

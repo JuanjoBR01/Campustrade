@@ -32,11 +32,13 @@ import androidx.core.app.ActivityCompat
 import com.example.campustrade.R
 import com.example.campustrade.data.Resource
 import com.example.campustrade.home.HomeActivityMVVM
+import com.example.campustrade.objects.Coordinates
 import com.example.campustrade.ui.theme.*
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.maps.model.LatLng
 
 
 class ExploreScreen : ComponentActivity() {
@@ -58,13 +60,11 @@ class ExploreScreen : ComponentActivity() {
 fun ExploreScreenComposable(modifier: Modifier = Modifier, viewModel: ExploreViewModel) {
 
     val context = LocalContext.current
-    var locationText by remember { mutableStateOf("") }
     var city by remember { mutableStateOf("") }
     var neighbourhood by remember { mutableStateOf("") }
     val fusedLocationClient = LocationServices.getFusedLocationProviderClient(LocalContext.current)
 
     val mapButtonEnabled: Boolean by viewModel.mapButtonEnabled.observeAsState(initial = true)
-    val distributorsList = viewModel.distributors.collectAsState()
     val loginFlow = viewModel.loginFlow.collectAsState()
 
 
@@ -147,10 +147,13 @@ fun ExploreScreenComposable(modifier: Modifier = Modifier, viewModel: ExploreVie
                             location?.let {
                                 val latitude = location.latitude
                                 val longitude = location.longitude
-                                locationText = "Latitud: $latitude\nLongitud: $longitude"
 
                                 city = getCityName(latitude, longitude, context)
                                 neighbourhood = getNeighbourhoodName(latitude, longitude, context)
+
+                                Coordinates.userCoordinates = LatLng(latitude, longitude)
+                                Coordinates.userCity = city
+                                Coordinates.userNeighbourhood = neighbourhood
                             }
                         }
                         viewModel.getDistributors(context)
@@ -159,15 +162,6 @@ fun ExploreScreenComposable(modifier: Modifier = Modifier, viewModel: ExploreVie
                 ) {
                     Text(text = "EXPLORE MAP")
                 }
-
-                /*
-                Text(text = locationText)
-                Text(text = city)
-                Text(text = neighbourhood)
-                 */
-
-
-
 
             }
         }
