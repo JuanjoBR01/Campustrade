@@ -8,11 +8,12 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-
+import com.example.campustrade.home.HomeViewModel
 
 
 class ProdsPScreenActivity : ComponentActivity() {
     private val viewModel by viewModels<ProdsPViewModel>()
+
 
     private val connectivityManager by lazy {
         getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager

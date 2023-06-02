@@ -1,10 +1,14 @@
 package com.example.campustrade.prodsProfile
 
+import android.net.Uri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.campustrade.repository.RepositoryFactory
 import com.example.campustrade.repository.RepositoryInterface
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class ProdsPViewModel() : ViewModel() {
 
@@ -16,8 +20,8 @@ class ProdsPViewModel() : ViewModel() {
     val userName: LiveData<String> = _userName
 
     //Atributo del image
-    private val _prodImage = MutableLiveData<String>("https://firebasestorage.googleapis.com/v0/b/campustrade-6d7b6.appspot.com/o/images%2F1684466533667?alt=media&token=8b882630-9a80-4f10-8095-84aff563dc7b")
-    val prodImage: LiveData<String> = _prodImage
+    private val _prodImage = MutableLiveData<Uri?>()
+    val prodImage: LiveData<Uri?> = _prodImage
 
     //Atributo del image
     private val _prodName = MutableLiveData<String>("")
@@ -31,10 +35,20 @@ class ProdsPViewModel() : ViewModel() {
     private val _prodTag = MutableLiveData<String>("")
     val prodTag: LiveData<String> = _prodTag
 
+    //Lista de usuarios
+    private val _arrayName = MutableLiveData<Array<String>>()
+    val arrayName: LiveData<Array<String>> = _arrayName
 
 
     fun onNetworkStateChanged(connection:Boolean){
 
+    }
+
+    fun fetchMyObjects() {
+        val scope = CoroutineScope(Dispatchers.IO)
+            scope.launch(Dispatchers.IO) {
+                val myObjects = repository.getMyObjects()
+            }
     }
 
 

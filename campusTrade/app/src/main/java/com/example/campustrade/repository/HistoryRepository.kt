@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import com.example.campustrade.home.HomeRepositoryInterface
 import com.example.campustrade.ProductDB
 import com.example.campustrade.dtos.ProductObj
+import com.example.campustrade.dtos.UsersProdsObj
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.toObjects
 import kotlinx.coroutines.tasks.await
@@ -19,6 +20,10 @@ class HistoryRepository:  RepositoryInterface  {
         val querySnapshot = collec.get().await()
 
         return querySnapshot.toObjects<ProductDB>()
+    }
+
+    override suspend fun getMyObjects(): List<UsersProdsObj> {
+        TODO("Not yet implemented")
     }
 
     override suspend fun makeLogin(email: String, password: String): Boolean {

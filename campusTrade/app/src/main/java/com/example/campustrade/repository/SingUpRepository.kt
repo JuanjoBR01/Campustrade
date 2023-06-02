@@ -7,6 +7,7 @@ import com.example.campustrade.FirebaseClient
 import com.example.campustrade.ProductDB
 import com.example.campustrade.dtos.ProductObj
 import com.example.campustrade.dtos.UserObj
+import com.example.campustrade.dtos.UsersProdsObj
 import com.google.firebase.firestore.CollectionReference
 import java.time.LocalDateTime
 
@@ -44,6 +45,10 @@ class SignUpRepository: RepositoryInterface {
     }
 
     override suspend fun getData(): List<ProductDB> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun getMyObjects(): List<UsersProdsObj> {
         TODO("Not yet implemented")
     }
 

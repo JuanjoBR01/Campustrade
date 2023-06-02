@@ -40,6 +40,12 @@
             android:label="@string/title_activity_history"
             android:theme="@style/Theme.Campustrade" />
         <activity
+            android:name=".prodsProfile.ProdsPScreenActivity"
+            android:screenOrientation="portrait"
+            android:exported="false"
+            android:label="ProdsProfile"
+            android:theme="@style/Theme.Campustrade" />
+        <activity
             android:name=".home.HomeActivityMVVM"
             android:screenOrientation="portrait"
             android:exported="false"

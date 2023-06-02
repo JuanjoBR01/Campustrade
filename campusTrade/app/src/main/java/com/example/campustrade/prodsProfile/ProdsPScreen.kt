@@ -1,35 +1,28 @@
 package com.example.campustrade.prodsProfile
 
 import android.content.Intent
-import androidx.activity.viewModels
+import android.net.Uri
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
-import androidx.compose.material.Text
-import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.campustrade.HomeActivity
 import com.example.campustrade.R
-import androidx.compose.foundation.layout.*
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.rememberImagePainter
-import coil.request.CachePolicy
-import coil.transform.CircleCropTransformation
-import com.example.campustrade.publish.PublishViewModel
-import androidx.activity.viewModels
+import androidx.compose.foundation.*
+import androidx.compose.material.*
+import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
+
 
 
 @Composable
@@ -41,9 +34,8 @@ fun ProdsPScreenMain(viewModel: ProdsPViewModel) {
             ){
         TopBarProdsPScreen()
         TopAppProdsView(viewModel)
+        MiddleProdsViews(viewModel)
     }
-
-
 }
 
 @Composable
@@ -77,38 +69,128 @@ fun TopAppProdsView(viewModel: ProdsPViewModel){
     //Contexto de la app
     val context = LocalContext.current
 
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(8.dp),
         contentAlignment = Alignment.Center
     ){
-        ImageWithFallback(viewModel.prodImage.value!!,R.drawable.sampleuser)
+        ImageWithFallback(Uri.parse("android.resource://" + context.packageName + "/" + R.drawable.deffff),viewModel)
     }
 
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = "Alberto Crazy",
+            style = MaterialTheme.typography.h5,
+            modifier = Modifier.padding(16.dp)
+        )
+    }
+    Spacer(modifier = Modifier.width(4.dp))
+}
+@Composable
+fun MiddleProdsViews(viewModel: ProdsPViewModel){
 
+    ScreenWithArrows(viewModel)
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Column() {
+            Text(
+                text = "Lab Mask",
+                style = MaterialTheme.typography.h5,
+                modifier = Modifier.padding(16.dp)
+            )
+            Text(
+                text = "Price",
+                style = MaterialTheme.typography.h5,
+                modifier = Modifier.padding(16.dp)
+            )
+
+            Text(
+                text = "Tags",
+                style = MaterialTheme.typography.h5,
+                modifier = Modifier.padding(16.dp)
+            )
+        }
+    }
+}
+
+
+
+
+@Composable
+fun ScreenWithArrows(viewModel: ProdsPViewModel) {
+    val listItems = remember {
+        mutableStateListOf("Item 1", "Item 2", "Item 3", "Item 4", "Item 5")
+    }
+    var currentIndex by remember { mutableStateOf(0) }
+
+//Contexto de la app
+    val context = LocalContext.current
+
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_left_arrow),
+                contentDescription = "Previous",
+                modifier = Modifier
+                    .size(48.dp)
+                    .clickable { currentIndex = (currentIndex - 1).coerceAtLeast(0) }
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Column {
+
+                ImageWithFallback(Uri.parse("android.resource://" + context.packageName + "/" + R.drawable.deffff),viewModel)
+
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Icon(
+                painter = painterResource(id = R.drawable.ic_right_arrow),
+                contentDescription = "Next",
+                modifier = Modifier
+                    .size(48.dp)
+                    .clickable {
+                        currentIndex = (currentIndex + 1).coerceAtMost(listItems.size - 1)
+                    }
+            )
+        }
+    }
 }
 
 @Composable
-fun ImageWithFallback(url: String, fallbackImageResId: Int) {
-    Box(modifier = Modifier.aspectRatio(1f)) {
-        Image(
-            painter = rememberImagePainter(
-                data = url,
-                builder = {
-                    error(fallbackImageResId)
-                    fallback(fallbackImageResId)
-                    transformations(CircleCropTransformation())
-                    memoryCachePolicy(CachePolicy.DISABLED)
-                    diskCachePolicy(CachePolicy.READ_ONLY)
-                }
-            ),
-            contentDescription = "Image",
-            modifier = Modifier.fillMaxSize(),
-            alignment = Alignment.Center
-        )
-    }
+fun ImageWithFallback(imageUr: Uri, viewModel: ProdsPViewModel) {
+    Image(
+        painter =
+        rememberAsyncImagePainter(
+            model = ImageRequest.Builder(context = LocalContext.current)
+                .crossfade(true).data(imageUr).build(),
+            filterQuality = FilterQuality.High
+        ),
+        contentDescription = null,
+        modifier = Modifier
+            .height(250.dp)
+            .width(250.dp)
+            .background(color = Color.Transparent),
+        contentScale = if (viewModel.prodImage.value == null) {
+            ContentScale.Inside
+        } else {
+            ContentScale.FillWidth
+        }
+    )
 }
+
 
 
 
