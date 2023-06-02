@@ -8,6 +8,7 @@ object RepositoryFactory {
             "Publish" -> PublishRepository()
             "Login" -> LoginRepository()
             "Singup" -> SignUpRepository()
+            "ProdsP" -> ProdsPRepository()
 
             else -> throw IllegalArgumentException("Invalid repository type")
         }
