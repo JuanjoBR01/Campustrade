@@ -3,6 +3,8 @@ package com.example.campustrade.prodsProfile
 import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.ContentValues.TAG
+import android.content.Context
+import android.content.SharedPreferences
 import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.LiveData
@@ -86,15 +88,56 @@ class ProdsPViewModel() : ViewModel() {
     private val _indeProd = MutableLiveData<Int>(0)
     val indeProd: LiveData<Int> = _indeProd
 
-    //
+
+    //NetWork State
+    private val _networkState = MutableLiveData<Boolean>(false)
+    val networkState: LiveData<Boolean> = _networkState
+
+    //Show internet connection dialogs
+    private val _connectDialg = MutableLiveData<Boolean>(true)
+    val connectDialg: LiveData<Boolean> = _connectDialg
 
 
-    fun onNetworkStateChanged(connection:Boolean){
+    fun getSharedPreferences(context: Context): SharedPreferences {
+        return context.getSharedPreferences("my_preferences", Context.MODE_PRIVATE)
+    }
 
+    fun saveToSharedPreferences(context: Context, key: String, value: String) {
+        val sharedPreferences = getSharedPreferences(context)
+        val editor = sharedPreferences.edit()
+        editor.putString(key, value)
+        editor.apply()
+        Log.d(TAG,"-------SAVEEE---------" + key + value)
+    }
+
+    fun retrieveFromSharedPreferences(context: Context, key: String): String? {
+        val sharedPreferences = getSharedPreferences(context)
+        return sharedPreferences.getString(key, null)
+    }
+
+
+    fun changeActualValues(pUsername:String, pProdName: String, pProdPrice:String, pProdTag:String, pIndex:Int){
+        _userName.value = pUsername
+        _prodImage.value = ""
+        _prodName.value = pProdName
+        _prodPrice.value = pProdPrice
+        _prodTag.value = pProdTag
+        _indeProd.value = pIndex
+        _prodImgg.value = ""
+        Log.d(TAG,"----------------" + pProdName)
+    }
+
+
+    fun onNetworkStateChanged(pIsConnected:Boolean){
+        _networkState.postValue(pIsConnected)
+        if (!pIsConnected) {
+            _connectDialg.postValue(true)
+        }
     }
 
 
     fun onChangeComboBox(pProdName: String, pExpanded: Boolean) {
+        if(networkState.value!!){
         for(index in userNames.indices){
             if(pProdName == userNames[index]){
                 _userName.value = userNames[index]
@@ -121,6 +164,7 @@ class ProdsPViewModel() : ViewModel() {
 
 
         _expanded.value = pExpanded
+    }
     }
 
     fun minusIndex(){

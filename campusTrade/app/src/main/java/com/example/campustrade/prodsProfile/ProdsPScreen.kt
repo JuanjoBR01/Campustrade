@@ -38,6 +38,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -126,7 +127,7 @@ fun TopAppProdsView(viewModel: ProdsPViewModel){
     else
         Icons.Filled.KeyboardArrowDown
 
-    Spacer(modifier = Modifier.width(4.dp))
+    Spacer(modifier = Modifier.width(16.dp))
 
     Box(
         modifier = Modifier
@@ -144,9 +145,10 @@ fun TopAppProdsView(viewModel: ProdsPViewModel){
                 }
             ),
             contentDescription = "Imagen",
-            modifier = Modifier.rotate(90f).height(120.dp).clip(CircleShape)
+            modifier = Modifier.rotate(90f).height(200.dp).clip(CircleShape)
         )
     }
+    Spacer(modifier = Modifier.width(16.dp))
 
     Column(
         modifier = Modifier
@@ -155,7 +157,7 @@ fun TopAppProdsView(viewModel: ProdsPViewModel){
         OutlinedTextField(
             value = userN,
             readOnly = true,
-            onValueChange = { viewModel.onChangeComboBox(it, expanded) },
+            onValueChange = { viewModel.onChangeComboBox(it, expanded); viewModel.saveToSharedPreferences(context,"userNamee", it) },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 4.dp)
@@ -170,13 +172,14 @@ fun TopAppProdsView(viewModel: ProdsPViewModel){
         )
         DropdownMenu(
             expanded = expanded,
-            onDismissRequest = { viewModel.onChangeComboBox(userN, false) },
+            onDismissRequest = { viewModel.onChangeComboBox(userN, false);viewModel.saveToSharedPreferences(context,"userNamee", userN)  },
             modifier = Modifier
                 .width(with(LocalDensity.current) { mTextFieldSize.width.toDp() })
         ) {
             valueType.forEach { label ->
                 DropdownMenuItem(onClick = {
                     viewModel.onChangeComboBox(label, false)
+                    viewModel.saveToSharedPreferences(context,"userNamee", label)
                 }) {
                     Text(text = label)
                 }
@@ -201,6 +204,24 @@ fun TopAppProdsView(viewModel: ProdsPViewModel){
     val imageUrlProd: String by viewModel.prodImgg.observeAsState(initial = "")
 
     Column(
+        modifier = Modifier
+            .padding(16.dp)
+            .background(Color(0xFFB8500))
+            .clip(RoundedCornerShape(8.dp))
+            .padding(8.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ){
+        Box(modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center){
+            Text(style = MaterialTheme.typography.h5,
+                fontWeight = FontWeight.Bold,
+                text = "Products from this seller")
+        }
+
+    }
+
+    Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
@@ -214,7 +235,11 @@ fun TopAppProdsView(viewModel: ProdsPViewModel){
                 contentDescription = "Previous",
                 modifier = Modifier
                     .size(48.dp)
-                    .clickable { viewModel.minusIndex() }
+                    .clickable { viewModel.minusIndex()
+                        viewModel.saveToSharedPreferences(context,"ProdNamee", prodName)
+                        viewModel.saveToSharedPreferences(context,"ProdPricee", prodPrice)
+                        viewModel.saveToSharedPreferences(context,"ProdTagss", prodTags)
+                    }
             )
             Spacer(modifier = Modifier.width(16.dp))
             Column {
@@ -228,7 +253,7 @@ fun TopAppProdsView(viewModel: ProdsPViewModel){
                         }
                     ),
                     contentDescription = "Imagen",
-                    modifier = Modifier.height(120.dp).clip(CircleShape)
+                    modifier = Modifier.height(240.dp).clip(CircleShape)
                 )
             }
             Spacer(modifier = Modifier.width(16.dp))
@@ -250,58 +275,53 @@ fun TopAppProdsView(viewModel: ProdsPViewModel){
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        Column() {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .background(Color(0xFFFFB703))
+                .clip(RoundedCornerShape(8.dp))
+                .padding(16.dp)
+        ) {
             Text(
-                text = "Name: " + prodName,
+                text = "Name: $prodName",
                 style = MaterialTheme.typography.h6,
-                modifier = Modifier.padding(16.dp)
+                fontWeight = FontWeight.Bold
             )
+            Divider(color = Color.Black, modifier = Modifier.padding(vertical = 8.dp))
             Text(
-                text = "Price: " + prodPrice,
-                style = MaterialTheme.typography.h6,
-                modifier = Modifier.padding(16.dp)
+                text = "Price: $prodPrice",
+                style = MaterialTheme.typography.body1
             )
-
+            Divider(color = Color.Black, modifier = Modifier.padding(vertical = 8.dp))
             Text(
-                text = "Tags: " + prodTags,
-                style = MaterialTheme.typography.h6,
-                modifier = Modifier.padding(16.dp)
+                text = "Tags: $prodTags",
+                style = MaterialTheme.typography.body1,
+                fontStyle = FontStyle.Italic
             )
         }
     }
+
+    val isConnected: Boolean by viewModel.networkState.observeAsState(initial = false)
+
+    if (!isConnected) {
+        var auxUserName:String = viewModel.retrieveFromSharedPreferences(context, "userNamee")?: "No user name"
+        var auxProdName:String =viewModel.retrieveFromSharedPreferences(context, "ProdNamee")?: "No product name"
+        var auxProdPrice:String = viewModel.retrieveFromSharedPreferences(context, "ProdPricee")?: "No product price"
+        var auxProdTags:String =viewModel.retrieveFromSharedPreferences(context, "ProdTagss")?: "No product tags"
+        var auxIndex:Int = viewModel.indeProd.value?:0
+        viewModel.changeActualValues(auxUserName,auxProdName,auxProdPrice,auxProdTags,auxIndex)
+        Text(
+            text = "Warning: NO INTERNET CONECTION, WINDOW WILL NOT UPDATE",
+            style = MaterialTheme.typography.body1.copy(
+                color = Color.Red,
+                fontStyle = FontStyle.Italic,
+                fontWeight = FontWeight.Bold
+            ),
+            modifier = Modifier.padding(16.dp)
+        )
+    }
+
 }
-
-
-
-
-@Composable
-fun ScreenWithArrows(viewModel: ProdsPViewModel) {
-
-}
-
-@Composable
-fun ImageWithFallback(imageUr: Uri, viewModel: ProdsPViewModel) {
-    Image(
-        painter =
-        rememberAsyncImagePainter(
-            model = ImageRequest.Builder(context = LocalContext.current)
-                .crossfade(true).data(imageUr).build(),
-            filterQuality = FilterQuality.High
-        ),
-        contentDescription = null,
-        modifier = Modifier
-            .height(250.dp)
-            .width(250.dp)
-            .background(color = Color.Transparent),
-        contentScale = if (viewModel.prodImage.value == null) {
-            ContentScale.Inside
-        } else {
-            ContentScale.FillWidth
-        }
-    )
-}
-
-
 
 
 @Preview(showBackground = true)
