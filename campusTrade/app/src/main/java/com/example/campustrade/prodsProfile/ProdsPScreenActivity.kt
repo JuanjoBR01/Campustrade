@@ -15,6 +15,7 @@ class ProdsPScreenActivity : ComponentActivity() {
     private val viewModel by viewModels<ProdsPViewModel>()
 
 
+
     private val connectivityManager by lazy {
         getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
     }
@@ -31,6 +32,7 @@ class ProdsPScreenActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        viewModel.onInicialization()
         connectivityManager.registerDefaultNetworkCallback(networkCallback)
         setContent {
             ProdsPScreenMain(viewModel)

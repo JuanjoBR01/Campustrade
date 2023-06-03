@@ -6,10 +6,22 @@ import com.example.campustrade.data.utils.await
 import com.example.campustrade.dtos.ProductObj
 import com.example.campustrade.dtos.UsersProdsObj
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ktx.toObject
+import com.google.firebase.firestore.ktx.toObjects
 
 class ProdsPRepository : RepositoryInterface {
     override suspend fun getData(): List<ProductDB> {
         TODO("Not yet implemented")
+    }
+
+    override suspend fun getDataP(): List<ProductObj> {
+        val firestore = FirebaseFirestore.getInstance()
+        val collectionRef = firestore.collection("ProductsDB")
+
+        val snapshot = collectionRef.get().await()
+        //val myObjectsList = mutableListOf<ProductDB>()
+
+        return snapshot.toObjects<ProductObj>()
     }
 
     override suspend fun makeLogin(email: String, password: String): Boolean {

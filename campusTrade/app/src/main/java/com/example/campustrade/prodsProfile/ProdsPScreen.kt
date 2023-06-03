@@ -1,28 +1,64 @@
 package com.example.campustrade.prodsProfile
 
+import android.content.ContentResolver
+import android.content.ContentValues.TAG
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
+import android.util.Log
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
-import com.example.campustrade.HomeActivity
-import com.example.campustrade.R
-import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.*
-import androidx.compose.material.*
-import androidx.compose.runtime.*
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.toSize
+import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
+import coil.compose.rememberImagePainter
 import coil.request.ImageRequest
-
+import com.example.campustrade.HomeActivity
+import com.example.campustrade.R
+import com.example.campustrade.cameraPublish.LaunchCameraScreen
+import com.example.campustrade.dtos.ProductObj
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.*
+import java.util.UUID.*
+import androidx.compose.runtime.livedata.observeAsState as observeAsState
 
 
 @Composable
@@ -34,7 +70,6 @@ fun ProdsPScreenMain(viewModel: ProdsPViewModel) {
             ){
         TopBarProdsPScreen()
         TopAppProdsView(viewModel)
-        MiddleProdsViews(viewModel)
     }
 }
 
@@ -69,6 +104,29 @@ fun TopAppProdsView(viewModel: ProdsPViewModel){
     //Contexto de la app
     val context = LocalContext.current
 
+    //Modelo
+    val valueType = viewModel.giveUserNames()
+
+    //Valor seleccionado en el combobox
+    val userN: String by viewModel.userName.observeAsState(initial = "")
+
+    //Tamaño del textfield
+    var mTextFieldSize by remember { mutableStateOf(Size.Zero) }
+
+    //Si esta expandida el combobox
+    val expanded: Boolean by viewModel.expanded.observeAsState(initial = false)
+
+    //Imagen URL
+    val imageUrl: String by viewModel.prodImage.observeAsState(initial = "")
+
+
+    //Cambia el icono dependiendo del valor de expandido
+    val icon = if (expanded)
+        Icons.Filled.KeyboardArrowUp
+    else
+        Icons.Filled.KeyboardArrowDown
+
+    Spacer(modifier = Modifier.width(4.dp))
 
     Box(
         modifier = Modifier
@@ -76,62 +134,71 @@ fun TopAppProdsView(viewModel: ProdsPViewModel){
             .padding(8.dp),
         contentAlignment = Alignment.Center
     ){
-        ImageWithFallback(Uri.parse("android.resource://" + context.packageName + "/" + R.drawable.deffff),viewModel)
-    }
-
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = "Alberto Crazy",
-            style = MaterialTheme.typography.h5,
-            modifier = Modifier.padding(16.dp)
+        Image(
+            painter = rememberImagePainter(
+                data = imageUrl,
+                builder = {
+                    crossfade(true)
+                    placeholder(R.drawable.programmer)
+                    error(R.drawable.programmer)
+                }
+            ),
+            contentDescription = "Imagen",
+            modifier = Modifier.rotate(90f).height(120.dp).clip(CircleShape)
         )
     }
-    Spacer(modifier = Modifier.width(4.dp))
-}
-@Composable
-fun MiddleProdsViews(viewModel: ProdsPViewModel){
 
-    ScreenWithArrows(viewModel)
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
+    Column(
+        modifier = Modifier
+            .padding(16.dp)
+    ) {
+        OutlinedTextField(
+            value = userN,
+            readOnly = true,
+            onValueChange = { viewModel.onChangeComboBox(it, expanded) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp)
+                .onGloballyPositioned { coordinates ->
+                    mTextFieldSize = coordinates.size.toSize()
+                },
+            label = { Text("User Name") },
+            trailingIcon = {
+                Icon(icon, "contentDescription",
+                    Modifier.clickable { viewModel.onChangeComboBox(userN, !expanded) })
+            }
+        )
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { viewModel.onChangeComboBox(userN, false) },
+            modifier = Modifier
+                .width(with(LocalDensity.current) { mTextFieldSize.width.toDp() })
         ) {
-            Column() {
-            Text(
-                text = "Lab Mask",
-                style = MaterialTheme.typography.h5,
-                modifier = Modifier.padding(16.dp)
-            )
-            Text(
-                text = "Price",
-                style = MaterialTheme.typography.h5,
-                modifier = Modifier.padding(16.dp)
-            )
-
-            Text(
-                text = "Tags",
-                style = MaterialTheme.typography.h5,
-                modifier = Modifier.padding(16.dp)
-            )
+            valueType.forEach { label ->
+                DropdownMenuItem(onClick = {
+                    viewModel.onChangeComboBox(label, false)
+                }) {
+                    Text(text = label)
+                }
+            }
         }
     }
-}
 
 
+    Spacer(modifier = Modifier.width(4.dp))
 
 
-@Composable
-fun ScreenWithArrows(viewModel: ProdsPViewModel) {
-    val listItems = remember {
-        mutableStateListOf("Item 1", "Item 2", "Item 3", "Item 4", "Item 5")
-    }
-    var currentIndex by remember { mutableStateOf(0) }
+    //Nombre del producto
+    val prodName: String by viewModel.prodName.observeAsState(initial = "")
 
-//Contexto de la app
-    val context = LocalContext.current
+    //Nombre del producto
+    val prodPrice: String by viewModel.prodPrice.observeAsState(initial = "")
+
+    //Nombre del producto
+    val prodTags: String by viewModel.prodTag.observeAsState(initial = "")
+
+    //Imagen URL
+    val imageUrlProd: String by viewModel.prodImgg.observeAsState(initial = "")
 
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -147,13 +214,22 @@ fun ScreenWithArrows(viewModel: ProdsPViewModel) {
                 contentDescription = "Previous",
                 modifier = Modifier
                     .size(48.dp)
-                    .clickable { currentIndex = (currentIndex - 1).coerceAtLeast(0) }
+                    .clickable { viewModel.minusIndex() }
             )
             Spacer(modifier = Modifier.width(16.dp))
             Column {
-
-                ImageWithFallback(Uri.parse("android.resource://" + context.packageName + "/" + R.drawable.deffff),viewModel)
-
+                Image(
+                    painter = rememberImagePainter(
+                        data = imageUrlProd,
+                        builder = {
+                            crossfade(true)
+                            placeholder(R.drawable.noprod)
+                            error(R.drawable.noprod)
+                        }
+                    ),
+                    contentDescription = "Imagen",
+                    modifier = Modifier.height(120.dp).clip(CircleShape)
+                )
             }
             Spacer(modifier = Modifier.width(16.dp))
             Icon(
@@ -162,11 +238,45 @@ fun ScreenWithArrows(viewModel: ProdsPViewModel) {
                 modifier = Modifier
                     .size(48.dp)
                     .clickable {
-                        currentIndex = (currentIndex + 1).coerceAtMost(listItems.size - 1)
+                        viewModel.plusIndex()
+                        Log.d(TAG,"Entro a dar click derecho")
                     }
             )
         }
     }
+
+
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column() {
+            Text(
+                text = "Name: " + prodName,
+                style = MaterialTheme.typography.h6,
+                modifier = Modifier.padding(16.dp)
+            )
+            Text(
+                text = "Price: " + prodPrice,
+                style = MaterialTheme.typography.h6,
+                modifier = Modifier.padding(16.dp)
+            )
+
+            Text(
+                text = "Tags: " + prodTags,
+                style = MaterialTheme.typography.h6,
+                modifier = Modifier.padding(16.dp)
+            )
+        }
+    }
+}
+
+
+
+
+@Composable
+fun ScreenWithArrows(viewModel: ProdsPViewModel) {
+
 }
 
 @Composable

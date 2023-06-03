@@ -22,6 +22,10 @@ class HistoryRepository:  RepositoryInterface  {
         return querySnapshot.toObjects<ProductDB>()
     }
 
+    override suspend fun getDataP(): List<ProductObj> {
+        TODO("Not yet implemented")
+    }
+
     override suspend fun getMyObjects(): List<UsersProdsObj> {
         TODO("Not yet implemented")
     }

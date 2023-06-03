@@ -82,6 +82,10 @@ class PublishRepository : RepositoryInterface {
         TODO("Not needed")
     }
 
+    override suspend fun getDataP(): List<ProductObj> {
+        TODO("Not yet implemented")
+    }
+
     override suspend fun getMyObjects(): List<UsersProdsObj> {
         TODO("Not yet implemented")
     }

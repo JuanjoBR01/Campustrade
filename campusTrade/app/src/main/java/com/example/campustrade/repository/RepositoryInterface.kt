@@ -8,6 +8,8 @@ import com.example.campustrade.dtos.UsersProdsObj
 interface RepositoryInterface{
     suspend fun getData(): List<ProductDB>
 
+    suspend fun getDataP(): List<ProductObj>
+
     suspend fun getMyObjects(): List<UsersProdsObj>
     suspend fun makeLogin(email: String,password: String): Boolean
     suspend fun uploadImageToDataBase(productOb: ProductObj, bitmp: Bitmap): ProductObj
