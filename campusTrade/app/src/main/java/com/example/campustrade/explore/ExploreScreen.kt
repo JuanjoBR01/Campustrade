@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Geocoder
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -29,6 +30,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
+import com.example.campustrade.ConnectivityReceiver
 import com.example.campustrade.R
 import com.example.campustrade.data.Resource
 import com.example.campustrade.home.HomeActivityMVVM
@@ -60,12 +62,12 @@ class ExploreScreen : ComponentActivity() {
 fun ExploreScreenComposable(modifier: Modifier = Modifier, viewModel: ExploreViewModel) {
 
     val context = LocalContext.current
-    var city by remember { mutableStateOf("") }
-    var neighbourhood by remember { mutableStateOf("") }
-    val fusedLocationClient = LocationServices.getFusedLocationProviderClient(LocalContext.current)
 
     val mapButtonEnabled: Boolean by viewModel.mapButtonEnabled.observeAsState(initial = true)
     val loginFlow = viewModel.loginFlow.collectAsState()
+
+    val connectivityReceiver = remember { ConnectivityReceiver(context = context) }
+    connectivityReceiver.register()
 
 
     Column(
@@ -133,30 +135,13 @@ fun ExploreScreenComposable(modifier: Modifier = Modifier, viewModel: ExploreVie
                 Button(
                     colors = ButtonDefaults.buttonColors(backgroundColor = orange),
                     onClick = {
-                        if (ActivityCompat.checkSelfPermission(
-                                context,
-                                Manifest.permission.ACCESS_FINE_LOCATION
-                            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                                context,
-                                Manifest.permission.ACCESS_COARSE_LOCATION
-                            ) != PackageManager.PERMISSION_GRANTED
-                        ) {
-
+                        if (connectivityReceiver.isOnline) {
+                            viewModel.getDistributors(context)
+                        } else if (Coordinates.distributors.size > 1) {
+                            val intent = Intent(context, MapScreen::class.java)
+                            context.startActivity(intent)
                         }
-                        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                            location?.let {
-                                val latitude = location.latitude
-                                val longitude = location.longitude
 
-                                city = getCityName(latitude, longitude, context)
-                                neighbourhood = getNeighbourhoodName(latitude, longitude, context)
-
-                                Coordinates.userCoordinates = LatLng(latitude, longitude)
-                                Coordinates.userCity = city
-                                Coordinates.userNeighbourhood = neighbourhood
-                            }
-                        }
-                        viewModel.getDistributors(context)
                     },
                     enabled = mapButtonEnabled
                 ) {
@@ -165,6 +150,10 @@ fun ExploreScreenComposable(modifier: Modifier = Modifier, viewModel: ExploreVie
 
             }
         }
+
+        NoInternetText(context = context)
+
+
         loginFlow.value?.let {
             when(it) {
                 is Resource.Failure ->{
@@ -172,13 +161,15 @@ fun ExploreScreenComposable(modifier: Modifier = Modifier, viewModel: ExploreVie
                     Toast.makeText(context, it.exception.message, Toast.LENGTH_SHORT).show()
                 }
                 is Resource.Loading -> {
-                    CircularProgressIndicator(Modifier.align(Alignment.CenterHorizontally))
+                    CircularProgressIndicator(Modifier.align(CenterHorizontally))
 
                 }
                 is Resource.Success -> {
                     LaunchedEffect(Unit) {
+                        viewModel.restartState()
                         val intent = Intent(context, MapScreen::class.java)
                         context.startActivity(intent)
+
                     }
                 }
                 Resource.PastFailure -> {
@@ -186,9 +177,14 @@ fun ExploreScreenComposable(modifier: Modifier = Modifier, viewModel: ExploreVie
                 }
             }
         }
+
+        DisposableEffect(key1 = connectivityReceiver) {
+            onDispose {
+                connectivityReceiver.unregister()
+            }
+        }
+
     }
-
-
 }
 
 
@@ -247,45 +243,40 @@ private fun GetFineLocationPermission(
                     style = MaterialTheme.typography.button
                 )
             }
+
+
         }
     }
 }
 
-
-fun getCityName(latitude: Double, longitude: Double, context: Context): String {
-    var cityName = ""
-    val geocoder = Geocoder(context)
-
-
-        val addresses = geocoder.getFromLocation(latitude, longitude, 1)
-        if (addresses != null) {
-            if (addresses.isNotEmpty()) {
-                cityName = addresses[0].locality ?: ""
-            }
-        }
-
-    return cityName
-}
-
-fun getNeighbourhoodName(latitude: Double, longitude: Double, context: Context): String {
-    var neighbourhoodName = ""
-    val geocoder = Geocoder(context)
-
-
-    val addresses = geocoder.getFromLocation(latitude, longitude, 1)
-    if (addresses != null) {
-        if (addresses.isNotEmpty()) {
-            neighbourhoodName = addresses[0].subLocality ?: ""
-        }
-    }
-
-    return neighbourhoodName
-}
 
 @Preview
 @Composable
 fun ExploreScreenPreview() {
     CampustradeTheme {
         ExploreScreenComposable(viewModel = ExploreViewModel())
+    }
+}
+
+@Composable
+fun NoInternetText(context: Context) {
+    val connectivityReceiver = remember { ConnectivityReceiver(context = context) }
+    connectivityReceiver.register()
+
+    if (!connectivityReceiver.isOnline) {
+        Text(text = "Disconnected! If you press the map button and nothing is cached, the button won't work :(",
+            color = Color.Red,
+            style = MaterialTheme.typography.body2,
+
+            )
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Log.d("ConnectionEvent", "Houston, we lost connectivity")
+    }
+
+    DisposableEffect(key1 = connectivityReceiver) {
+        onDispose {
+            connectivityReceiver.unregister()
+        }
     }
 }

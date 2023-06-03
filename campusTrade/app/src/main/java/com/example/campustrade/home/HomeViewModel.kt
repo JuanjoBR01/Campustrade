@@ -21,6 +21,7 @@ import com.example.campustrade.history.HistoryRepository
 import com.example.campustrade.objects.CurrentUser
 import com.example.campustrade.profile.ProfileScreen
 import com.example.campustrade.publish.PublishScreen
+import com.example.campustrade.repository.TelemetryRepository
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.time.LocalDate
@@ -257,31 +258,43 @@ class HomeViewModel(private val repository: HomeRepository, private val historyR
     data class BottomMenuItem2(val label: String, val icon: ImageVector)
 
     fun changePage(name: String, context: Context){
+
+        //val telemetryRepository = TelemetryRepository()
+
         if(name == "Home")
         {
+            //telemetryRepository.updateVisits("Home")
             val intent = Intent(context, HomeActivityMVVM::class.java)
             context.startActivity(intent)
+
         }
         else if(name == "Publish")
         {
+            //telemetryRepository.updateVisits("Publish")
             val intent = Intent(context, PublishScreen::class.java)
             context.startActivity(intent)
         }
         else if(name == "History")
         {
+            //telemetryRepository.updateVisits("Transactions")
             val intent = Intent(context, HistoryActivity::class.java)
             context.startActivity(intent)
         }
         else if(name == "Profile")
         {
+            //telemetryRepository.updateVisits("Profile")
+
             val intent = Intent(context, ProfileScreen::class.java)
             context.startActivity(intent)
         }
         else if(name == "Explore")
         {
+            //telemetryRepository.updateVisits("Explore")
             val intent = Intent(context, ExploreScreen::class.java)
             context.startActivity(intent)
         }
+
+
 
     }
 

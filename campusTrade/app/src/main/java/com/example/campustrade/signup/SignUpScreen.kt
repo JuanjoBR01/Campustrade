@@ -32,6 +32,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import android.content.Context
 import android.os.Build
 import android.os.Environment
+import android.os.SystemClock
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.ui.graphics.FilterQuality
@@ -43,6 +44,7 @@ import com.example.campustrade.R
 import com.example.campustrade.data.Resource
 import com.example.campustrade.home.HomeActivityMVVM
 import com.example.campustrade.login.LoginScreen
+import com.example.campustrade.objects.SignUpTime
 import com.example.campustrade.repository.AuthenticationRepository
 import com.example.campustrade.ui.theme.*
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -62,6 +64,7 @@ class SignUpScreen : ComponentActivity() {
     private val viewModel = SignUpViewModel(AuthenticationRepository(FirebaseAuth.getInstance()))
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
+        SignUpTime.startTime = SystemClock.elapsedRealtime()
         super.onCreate(savedInstanceState)
         setContent {
             CampustradeTheme {
@@ -288,6 +291,9 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier, viewModel: SignUpViewM
                         mes = "Please take a photo"
                     } else {
                         mes = "Uploading info..."
+                        SignUpTime.endTime = SystemClock.elapsedRealtime()
+                        SignUpTime.totalTime = SignUpTime.endTime - SignUpTime.startTime
+
                         viewModel?.uploadImage(context, contentImage.value, valueType, nameField, emailField, secretField)
 
 

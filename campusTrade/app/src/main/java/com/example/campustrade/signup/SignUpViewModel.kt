@@ -15,6 +15,7 @@ import com.example.campustrade.objects.FirebaseClient
 import com.example.campustrade.objects.SuHashMap.suMap
 import com.example.campustrade.profile.UsersRepository
 import com.example.campustrade.repository.AuthRepository
+import com.example.campustrade.repository.TelemetryRepository
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
@@ -59,6 +60,8 @@ class SignUpViewModel @Inject constructor(
     private val creationRepository = SignUpRepository(FirebaseClient.fireStore)
 
     private val usersRepository = UsersRepository()
+
+    private val telemetryRepository = TelemetryRepository()
 
 
 
@@ -145,6 +148,10 @@ class SignUpViewModel @Inject constructor(
 
                 }
             }
+        }
+
+        withContext(Dispatchers.IO) {
+            telemetryRepository.uploadSignUpTime()
         }
     }
 
