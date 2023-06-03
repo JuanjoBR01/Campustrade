@@ -90,7 +90,7 @@ fun MyCart(cartViewModel: CartViewModel){
     val connectivityReceiver = remember { ConnectivityReceiver(context = contexto) }
     connectivityReceiver.register()
     var screenH2 = 250.dp
-    if(connectivityReceiver.isOnline){
+    if(!connectivityReceiver.isOnline){
         screenH2 = 300.dp
     }
 
@@ -286,6 +286,16 @@ fun ConnectionLostCart(context: Context) {
 
     val openDialog = remember{ mutableStateOf(true) }
 
+    if (!connectivityReceiver.isOnline && openDialog.value == true) {
+        AlertDialog(
+            onDismissRequest = {openDialog.value = false},
+            title = { Text("Disconnected!") },
+            text = { Text("Try to go back online!") },
+            confirmButton = {},
+            dismissButton = {}
+        )
+        Log.d("ConnectionEvent", "Lost connectivity")
+    }
     if (!connectivityReceiver.isOnline) {
         Box(
             contentAlignment = Alignment.CenterEnd,
@@ -301,14 +311,6 @@ fun ConnectionLostCart(context: Context) {
                 color = Color(0xFFFB8500)
             )
         }
-        AlertDialog(
-            onDismissRequest = {openDialog.value = false},
-            title = { Text("Disconnected!") },
-            text = { Text("Try to go back online!") },
-            confirmButton = {},
-            dismissButton = {}
-        )
-        Log.d("ConnectionEvent", "Lost connectivity")
     }
 
     DisposableEffect(key1 = connectivityReceiver) {
