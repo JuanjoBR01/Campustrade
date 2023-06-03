@@ -2,6 +2,7 @@ package com.example.campustrade.publish
 
 import android.content.ContentResolver
 import android.content.ContentValues.TAG
+import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -425,6 +426,11 @@ fun bottomView(viewModel: PublishViewModel) {
     val currentDate = Date()
     val publishDat = dateFormat.format(currentDate)
 
+
+    val sharedPreferences = context.getSharedPreferences("logged_user_preferences", Context.MODE_PRIVATE)
+
+    val nameField = sharedPreferences.getString("name", "     ")
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -467,7 +473,8 @@ fun bottomView(viewModel: PublishViewModel) {
                         tags = prodTags,
                         publishDate = publishDat,
                         stock = 1,
-                        technicalSpecs = "TS"
+                        technicalSpecs = "TS",
+                        user = nameField!!
                     )
                     Toast.makeText(context, "Publishing...", Toast.LENGTH_LONG).show()
 

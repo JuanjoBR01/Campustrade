@@ -1,33 +1,27 @@
 package com.example.campustrade.repository
 
 import android.graphics.Bitmap
-import com.example.campustrade.home.HomeRepositoryInterface
 import com.example.campustrade.ProductDB
+import com.example.campustrade.data.utils.await
 import com.example.campustrade.dtos.ProductObj
 import com.example.campustrade.dtos.UsersProdsObj
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ktx.toObject
 import com.google.firebase.firestore.ktx.toObjects
-import kotlinx.coroutines.tasks.await
 
-class HistoryRepository:  RepositoryInterface  {
+class ProdsPRepository : RepositoryInterface {
     override suspend fun getData(): List<ProductDB> {
-        //var listResp : List<ProductDB> = emptyList()
-
-        // on below line creating an instance of firebase firestore.
-        val db: FirebaseFirestore = FirebaseFirestore.getInstance()
-        val collec = db.collection("ProductsDB")
-
-        val querySnapshot = collec.get().await()
-
-        return querySnapshot.toObjects<ProductDB>()
+        TODO("Not yet implemented")
     }
 
     override suspend fun getDataP(): List<ProductObj> {
-        TODO("Not yet implemented")
-    }
+        val firestore = FirebaseFirestore.getInstance()
+        val collectionRef = firestore.collection("ProductsDB")
 
-    override suspend fun getMyObjects(): List<UsersProdsObj> {
-        TODO("Not yet implemented")
+        val snapshot = collectionRef.get().await()
+        //val myObjectsList = mutableListOf<ProductDB>()
+
+        return snapshot.toObjects<ProductObj>()
     }
 
     override suspend fun makeLogin(email: String, password: String): Boolean {
@@ -51,4 +45,22 @@ class HistoryRepository:  RepositoryInterface  {
     ): Boolean {
         TODO("Not yet implemented")
     }
+
+    override suspend fun getMyObjects(): List<UsersProdsObj> {
+        val firestore = FirebaseFirestore.getInstance()
+        val collectionRef = firestore.collection("users")
+
+        val snapshot = collectionRef.get().await()
+        val myObjectsList = mutableListOf<UsersProdsObj>()
+
+        for (document in snapshot.documents) {
+            val myObject = document.toObject(UsersProdsObj::class.java)
+            myObject?.let {
+                myObjectsList.add(it)
+            }
+        }
+
+        return myObjectsList
+    }
+
 }

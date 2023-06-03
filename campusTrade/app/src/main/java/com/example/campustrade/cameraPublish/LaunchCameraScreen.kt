@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import coil.compose.rememberAsyncImagePainter
 import com.example.campustrade.R
+import com.example.campustrade.prodsProfile.ProdsPScreenActivity
 import com.example.campustrade.publish.PublishScreen
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberPermissionState
@@ -64,7 +65,8 @@ fun TopBarLaunchCamera(){
     ){
         Row(){
             IconButton(onClick = {
-                val intent = Intent(context, PublishScreen::class.java)
+                //val intent = Intent(context, PublishScreen::class.java)
+                val intent = Intent(context, ProdsPScreenActivity::class.java)
                 context.startActivity(intent)
             }) {
                 Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Go Back")
