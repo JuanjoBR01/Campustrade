@@ -9,6 +9,9 @@
     <uses-feature android:name="android.hardware.camera.any" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION"/>
 
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
@@ -33,6 +36,9 @@
         android:theme="@style/Theme.Campustrade"
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyAXcSMt2YMgtm_PmunBFkvbNjrbvZGV0aU"/>
         <activity
             android:name=".history.HistoryActivity"
             android:screenOrientation="portrait"
@@ -83,6 +89,18 @@
             android:theme="@style/Theme.Campustrade" />
         <activity
             android:name=".profile.ProfileScreen"
+            android:screenOrientation="portrait"
+            android:exported="false"
+            android:label="@string/title_activity_profile"
+            android:theme="@style/Theme.Campustrade" />
+        <activity
+            android:name=".explore.ExploreScreen"
+            android:screenOrientation="portrait"
+            android:exported="false"
+            android:label="@string/title_activity_profile"
+            android:theme="@style/Theme.Campustrade" />
+        <activity
+            android:name=".explore.MapScreen"
             android:screenOrientation="portrait"
             android:exported="false"
             android:label="@string/title_activity_profile"

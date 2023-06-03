@@ -14,6 +14,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import com.example.campustrade.data.Resource
+import com.example.campustrade.dtos.UserObj
+import com.example.campustrade.objects.CurrentUser
 import com.example.campustrade.profile.UsersRepository
 import com.example.campustrade.repository.AuthRepository
 import com.example.campustrade.repository.TelemetryRepository
@@ -74,6 +76,7 @@ class LoginViewModel @Inject constructor(
     private fun isValidPassword(password: String): Boolean = password.length > 6
 
     init {
+
         logOut()
         if(repository.currentUser != null) {
             _loginFlow.value = Resource.Success(repository.currentUser!!)
@@ -90,10 +93,13 @@ class LoginViewModel @Inject constructor(
         _email.value = formsMap["email"]
         _password.value = formsMap["password"]
 
+        CurrentUser.user = UserObj("retrieving data","retrieving data@abc.com","retrieving data","abcdef", "retrieving data")
+
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun login(email: String, password: String, context: Context) = viewModelScope.launch {
+        usersRepository.updateSharedPreferences(context)
         _loginFlow.value = Resource.Loading
         _signupEnable.value = false
         _loginEnable.value = false
