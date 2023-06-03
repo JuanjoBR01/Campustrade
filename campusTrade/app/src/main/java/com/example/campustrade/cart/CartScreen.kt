@@ -286,7 +286,7 @@ fun ConnectionLostCart(context: Context) {
 
     val openDialog = remember{ mutableStateOf(true) }
 
-    if (!connectivityReceiver.isOnline && openDialog.value == true) {
+    if (!connectivityReceiver.isOnline) {
         Box(
             contentAlignment = Alignment.CenterEnd,
             modifier = Modifier
