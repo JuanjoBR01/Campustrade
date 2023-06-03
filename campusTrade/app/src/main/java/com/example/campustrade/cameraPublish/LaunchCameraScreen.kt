@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import coil.compose.rememberAsyncImagePainter
 import com.example.campustrade.R
+import com.example.campustrade.prodsProfile.ProdsPScreenActivity
 import com.example.campustrade.publish.PublishScreen
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberPermissionState

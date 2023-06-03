@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.util.Log
 import com.example.campustrade.ProductDB
 import com.example.campustrade.dtos.ProductObj
+import com.example.campustrade.dtos.UsersProdsObj
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.ktx.Firebase
@@ -79,6 +80,14 @@ class PublishRepository : RepositoryInterface {
 
     override suspend fun getData(): List<ProductDB> {
         TODO("Not needed")
+    }
+
+    override suspend fun getDataP(): List<ProductObj> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun getMyObjects(): List<UsersProdsObj> {
+        TODO("Not yet implemented")
     }
 
     override suspend fun makeLogin(email: String, password: String): Boolean {

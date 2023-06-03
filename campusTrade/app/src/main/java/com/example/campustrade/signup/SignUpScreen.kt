@@ -1,4 +1,5 @@
 package com.example.campustrade.signup
+import android.Manifest
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.Image
@@ -28,13 +29,10 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.VisualTransformation
-import com.example.campustrade.ui.theme.CampustradeTheme
-import com.example.campustrade.ui.theme.darkBlue
-import com.example.campustrade.ui.theme.orange
-import com.example.campustrade.ui.theme.white
 import android.content.Context
 import android.os.Build
 import android.os.Environment
+import android.os.SystemClock
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.ui.graphics.FilterQuality
@@ -46,7 +44,12 @@ import com.example.campustrade.R
 import com.example.campustrade.data.Resource
 import com.example.campustrade.home.HomeActivityMVVM
 import com.example.campustrade.login.LoginScreen
+import com.example.campustrade.objects.SignUpTime
 import com.example.campustrade.repository.AuthenticationRepository
+import com.example.campustrade.ui.theme.*
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.PermissionState
+import com.google.accompanist.permissions.rememberPermissionState
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -61,6 +64,7 @@ class SignUpScreen : ComponentActivity() {
     private val viewModel = SignUpViewModel(AuthenticationRepository(FirebaseAuth.getInstance()))
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
+        SignUpTime.startTime = SystemClock.elapsedRealtime()
         super.onCreate(savedInstanceState)
         setContent {
             CampustradeTheme {
@@ -72,7 +76,7 @@ class SignUpScreen : ComponentActivity() {
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalPermissionsApi::class)
 @Composable
 fun SignUpScreenComposable(modifier: Modifier = Modifier, viewModel: SignUpViewModel) {
     val prodType = arrayOf("Material", "Product", "Accessory", "Other")
@@ -90,8 +94,6 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier, viewModel: SignUpViewM
 
     val connectivityReceiver = remember { ConnectivityReceiver(context = context) }
     connectivityReceiver.register()
-
-
 
     var contentImage = remember{
         mutableStateOf<Uri?>(null)
@@ -113,6 +115,8 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier, viewModel: SignUpViewM
 
     val state = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
     val scope = rememberCoroutineScope()
+
+
 
 
     Column (
@@ -269,6 +273,8 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier, viewModel: SignUpViewM
 
         NoInternetText(context = context)
 
+        FeatureThatRequiresPermissions()
+
         Button(
             onClick = {
                 if (connectivityReceiver.isOnline) {
@@ -285,6 +291,9 @@ fun SignUpScreenComposable(modifier: Modifier = Modifier, viewModel: SignUpViewM
                         mes = "Please take a photo"
                     } else {
                         mes = "Uploading info..."
+                        SignUpTime.endTime = SystemClock.elapsedRealtime()
+                        SignUpTime.totalTime = SignUpTime.endTime - SignUpTime.startTime
+
                         viewModel?.uploadImage(context, contentImage.value, valueType, nameField, emailField, secretField)
 
 
@@ -384,7 +393,6 @@ fun TextBoxField(value: String, onValueChange: (String) -> Unit, label: String, 
             unfocusedBorderColor = darkBlue),
         modifier = Modifier.width(350.dp),
         visualTransformation = visualTransformation
-
     )
 
 }
@@ -504,6 +512,46 @@ fun NoInternetText(context: Context) {
     DisposableEffect(key1 = connectivityReceiver) {
         onDispose {
             connectivityReceiver.unregister()
+        }
+    }
+}
+
+@Composable
+@ExperimentalPermissionsApi
+private fun FeatureThatRequiresPermissions() {
+
+    Column(Modifier.fillMaxWidth(),verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally) {
+
+        // Camera permission state
+        val cameraPermissionState = rememberPermissionState(
+            Manifest.permission.CAMERA
+        )
+        GetPermission(perm = cameraPermissionState)
+    }
+
+}
+
+@ExperimentalPermissionsApi
+@Composable
+private fun GetPermission(
+    perm: PermissionState
+) {
+    if(perm.hasPermission){
+        print("Permission already granted")
+    }
+    else{
+
+        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally) {
+            Button(
+                onClick = { perm.launchPermissionRequest()},
+                colors = ButtonDefaults.buttonColors(backgroundColor = orange),
+                modifier = Modifier.width(200.dp).height(50.dp)){
+                Text("Request Camera Permission", color = black
+                )
+            }
+            Spacer(modifier = Modifier.height(25.dp))
         }
     }
 }

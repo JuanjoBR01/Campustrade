@@ -46,21 +46,4 @@ class AuthenticationRepository @Inject constructor(
     override fun logout() {
         firebaseAuth.signOut()
     }
-
-    /*
-    suspend fun getAllUsersFromLocalDatabase(): List<UserObj> {
-        val response: List<UserEntity> = userDao.gerAllUsers()
-        return response.map{
-            it.toDomain()
-        }
-    }
-
-    suspend fun insertQuotes(quotes: List<UserEntity>) {
-        userDao.insertAll(quotes)
-    }
-
-    suspend fun clearUsers() {
-        userDao.deleteAll()
-    }
-*/
 }

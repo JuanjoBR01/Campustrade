@@ -3,6 +3,8 @@ package com.example.campustrade.home
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.graphics.Color
@@ -14,6 +16,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.campustrade.*
 import com.example.campustrade.cart.CartActivity
+import com.example.campustrade.explore.ExploreScreen
 import com.example.campustrade.history.HistoryActivity
 import com.example.campustrade.history.HistoryRepository
 import com.example.campustrade.objects.CurrentUser
@@ -23,6 +26,7 @@ import com.example.campustrade.objects.LruCacheCant
 import com.example.campustrade.product.ProductActivity
 import com.example.campustrade.profile.ProfileScreen
 import com.example.campustrade.publish.PublishScreen
+import com.example.campustrade.repository.TelemetryRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -243,29 +247,44 @@ class HomeViewModel(private val repository: HomeRepository, private val historyR
     data class BottomMenuItem2(val label: String, val icon: ImageVector)
 
     fun changePage(name: String, context: Context){
+
+        //val telemetryRepository = TelemetryRepository()
+
         if(name == "Home")
         {
+            //telemetryRepository.updateVisits("Home")
             val intent = Intent(context, HomeActivityMVVM::class.java)
             context.startActivity(intent)
+
         }
         else if(name == "Publish")
         {
+            //telemetryRepository.updateVisits("Publish")
             val intent = Intent(context, PublishScreen::class.java)
             context.startActivity(intent)
         }
         else if(name == "History")
         {
+            //telemetryRepository.updateVisits("Transactions")
             val intent = Intent(context, HistoryActivity::class.java)
             context.startActivity(intent)
         }
         else if(name == "Profile")
         {
+            //telemetryRepository.updateVisits("Profile")
+
             val intent = Intent(context, ProfileScreen::class.java)
             context.startActivity(intent)
         }
         else if(name == "Product")
         {
             val intent = Intent(context, ProductActivity::class.java)
+            context.startActivity(intent)
+        }
+        else if(name == "Explore")
+        {
+            //telemetryRepository.updateVisits("Explore")
+            val intent = Intent(context, ExploreScreen::class.java)
             context.startActivity(intent)
         }
 
@@ -275,6 +294,11 @@ class HomeViewModel(private val repository: HomeRepository, private val historyR
         val intent = Intent(context, CartActivity::class.java)
         context.startActivity(intent)
     }
+
+        
+    
+
+    @RequiresApi(Build.VERSION_CODES.O)
 
     fun getDiscount(): Int {
         val date = LocalDate.now()
