@@ -5,13 +5,13 @@ class SortingProductsStrategyType: SortingProductsStrategyInterface {
             val productList = arrayListOf<ProductDB>()
 
             actualList.forEach { producto ->
-                if(producto.type == preference && producto.name.length > 2)
+                if(producto.type == preference)
                 {
                     productList.add(producto)
                 }
             }
             actualList.forEach { producto ->
-                if(producto.type != preference && producto.name.length > 2)
+                if(producto.type != preference)
                 {
                     productList.add(producto)
                 }

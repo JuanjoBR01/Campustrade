@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -27,6 +28,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -51,6 +54,7 @@ fun MyBodyHome2(homeViewModel: HomeViewModel){
     val isPressed by interactionSource.collectIsPressedAsState()
 
     val contexto = LocalContext.current.applicationContext
+    val contextoNav = LocalContext.current
 
     val maxChar = 25
     val value :String by homeViewModel.value.observeAsState(initial = "")
@@ -65,24 +69,27 @@ fun MyBodyHome2(homeViewModel: HomeViewModel){
 
     TopAppBar(modifier = Modifier.height(75.dp),
         title = {
-            Column() {
-                TextField(modifier = Modifier.height(60.dp),
-                    value = value,
-                    singleLine = true,
-                    placeholder = { Text(text = "Search", fontSize = 22.sp) },
-                    onValueChange = {
-                        homeViewModel.onSearchChange(it)
-                    },
-                )
-                Text(
-                    text = "${value.length} / $maxChar",
-                    textAlign = TextAlign.End,
-                    style = MaterialTheme.typography.caption,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(end = 16.dp),
-                    color = black
-                )
+            Row() {
+                Column() {
+                    TextField(
+                        modifier = Modifier.height(60.dp),
+                        value = value,
+                        singleLine = true,
+                        placeholder = { Text(text = "Search", fontSize = 22.sp) },
+                        onValueChange = {
+                            homeViewModel.onSearchChange(it)
+                        },
+                    )
+                    Text(
+                        text = "${value.length} / $maxChar",
+                        textAlign = TextAlign.End,
+                        style = MaterialTheme.typography.caption,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(end = 16.dp),
+                        color = black
+                    )
+                }
             }
         },
         backgroundColor = Color(0xFF8ECAE6),
@@ -136,6 +143,11 @@ fun MyBodyHome2(homeViewModel: HomeViewModel){
                     // Agregar más elementos de menú si es necesario
                 }
             }
+        },
+        actions = {
+            IconButton(onClick = { homeViewModel.addToCart(contextoNav) }) {
+                Icon(imageVector = Icons.Default.ShoppingCart, contentDescription = "", modifier = Modifier.size(65.dp))
+            }
         }
     )
 
@@ -144,7 +156,7 @@ fun MyBodyHome2(homeViewModel: HomeViewModel){
 
     //val productList = homeViewModel.arrangeProductList(value)
 
-    //ConnectionLost(context = contexto)
+    ConnectionLost(context = contexto)
 
         val data: List<ProductDB> by homeViewModel.productList.observeAsState(emptyList())
 
@@ -201,6 +213,8 @@ fun MyBodyHome2(homeViewModel: HomeViewModel){
 @Composable
 fun ProductList2(producto: ProductDB, homeViewModel: HomeViewModel) {
     //producto = Product(name = "Pencils", type = "Material", price = 5000, icon = Icons.Filled.Home)
+    val context = LocalContext.current
+    val contexto = LocalContext.current.applicationContext
     Column (modifier = Modifier
         .padding(16.dp)
         .border(2.dp, Color.Black, shape = RoundedCornerShape(10.dp))
@@ -257,6 +271,17 @@ fun ProductList2(producto: ProductDB, homeViewModel: HomeViewModel) {
                 style = MaterialTheme.typography.h6,
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold
+            )
+            ClickableText(
+                text = AnnotatedString(producto.name),
+                style = TextStyle(
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,),
+                onClick = {
+                    homeViewModel.saveToSharedPreferences(contexto, "prodDetail", producto.name)
+                    homeViewModel.addToCache(context, producto)
+                    homeViewModel.changePage("Product", context)
+                }
             )
         }
         Box(
@@ -366,7 +391,7 @@ fun ConnectionLost(context: Context) {
         Box(
             contentAlignment = Alignment.CenterEnd,
             modifier = Modifier
-                .padding(end = 10.dp, top = 5.dp)
+                .padding(end = 10.dp, top = 5.dp, start = 15.dp)
                 .fillMaxWidth()
         ) {
             Text(
