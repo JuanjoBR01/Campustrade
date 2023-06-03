@@ -40,6 +40,8 @@
     <string name="title_activity_home_mvvm">HomeActivityMVVM</string>
     <string name="title_activity_history">HistoryActivity</string>
     <string name="title_activity_profile">ProfileActivity</string>
+    <string name="title_activity_product">ProductActivity</string>
+    <string name="title_activity_cart">CartActivity</string>
 
 
 </resources>

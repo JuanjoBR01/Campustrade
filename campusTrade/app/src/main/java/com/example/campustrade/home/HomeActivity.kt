@@ -85,7 +85,7 @@ fun readData(){
 }
 
 data class ProductDB(val name: String, val type: String, val price: Int, val condition: String, val description: String, val image: String, val publishDate: String, val stock: Int, val tags: String, val technicalSpecs: String){
-    constructor(): this("Prueba", "Prueba", 8, "Prueba","Prueba","Prueba","Prueba",8,"Prueba","Prueba",)
+    constructor(): this("Loading", "Loading", 8, "Loading","Loading","Loading","Loading",8,"Loading","Loading",)
 }
 
 

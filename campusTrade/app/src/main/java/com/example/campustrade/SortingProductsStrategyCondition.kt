@@ -6,13 +6,13 @@ class SortingProductsStrategyCondition: SortingProductsStrategyInterface {
         val productList = arrayListOf<ProductDB>()
 
         actualList.forEach { producto ->
-            if(producto.condition == preference && producto.name.length > 2)
+            if(producto.condition == preference)
             {
                 productList.add(producto)
             }
         }
         actualList.forEach { producto ->
-            if(producto.condition != preference && producto.name.length > 2)
+            if(producto.condition != preference)
             {
                 productList.add(producto)
             }

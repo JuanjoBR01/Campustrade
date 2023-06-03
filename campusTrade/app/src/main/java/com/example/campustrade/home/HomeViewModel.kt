@@ -13,9 +13,14 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.campustrade.*
+import com.example.campustrade.cart.CartActivity
 import com.example.campustrade.history.HistoryActivity
 import com.example.campustrade.history.HistoryRepository
 import com.example.campustrade.objects.CurrentUser
+import com.example.campustrade.objects.ExpirationCache.expiringCacheApp
+import com.example.campustrade.objects.LruCacheCampus
+import com.example.campustrade.objects.LruCacheCant
+import com.example.campustrade.product.ProductActivity
 import com.example.campustrade.profile.ProfileScreen
 import com.example.campustrade.publish.PublishScreen
 import kotlinx.coroutines.Dispatchers
@@ -131,6 +136,7 @@ class HomeViewModel(private val repository: HomeRepository, private val historyR
         val sharedPreferences = getSharedPreferences(context)
         return sharedPreferences.getString(key, null)
     }
+
 
     fun arrangeProductListFirestore(search: String, preference: String) = viewModelScope.launch{
         var productList = arrayListOf<ProductDB>()
@@ -257,7 +263,17 @@ class HomeViewModel(private val repository: HomeRepository, private val historyR
             val intent = Intent(context, ProfileScreen::class.java)
             context.startActivity(intent)
         }
+        else if(name == "Product")
+        {
+            val intent = Intent(context, ProductActivity::class.java)
+            context.startActivity(intent)
+        }
 
+    }
+
+    fun addToCart(context: Context) {
+        val intent = Intent(context, CartActivity::class.java)
+        context.startActivity(intent)
     }
 
     fun getDiscount(): Int {
@@ -276,5 +292,9 @@ class HomeViewModel(private val repository: HomeRepository, private val historyR
         }
 
         return discount
+    }
+
+    fun addToCache(context: Context, product: ProductDB) {
+        expiringCacheApp.put(product.name, product)
     }
 }
