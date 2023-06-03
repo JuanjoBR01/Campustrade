@@ -6,27 +6,30 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.runtime.remember
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.campustrade.*
 import com.example.campustrade.dtos.PurchaseInfo
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 
-class HistoryViewModel(private val repository: HistoryRepository) {
+class HistoryViewModel(private val repository: HistoryRepository): ViewModel() {
 
     private var _productList = MutableLiveData<List<ProductDB>>()
     val productList : LiveData<List<ProductDB>> = _productList
 
-    fun arrangeProductListFirestore(){
+    fun arrangeProductListFirestore()=viewModelScope.launch{
         var productList = arrayListOf<ProductDB>()
         var finalList = arrayListOf<ProductDB>()
 
-        runBlocking{
-            launch{
+        withContext(Dispatchers.IO){
                 val actualList = repository.getData()
-                _productList.value =  actualList
-            }
+                _productList.postValue(actualList)
         }
     }
 
@@ -42,48 +45,54 @@ class HistoryViewModel(private val repository: HistoryRepository) {
     private val _condPur = MutableLiveData<String>()
     val condPur : LiveData<String> = _condPur
 
-    fun purchaseData(contexto: Context)
-    {
-        runBlocking{
-            launch{
-                val actualInfo = repository.getPurchaseData()?.get(0)
-                if(actualInfo != null)
-                {
-                    _numPur.value =  actualInfo.numPurchases.toString()
-                    _totPur.value =  actualInfo.totalPurchased.toString()
-                    _typePur.value =  actualInfo.typePurchased
-                    _condPur.value =  actualInfo.condPurchased
+    fun purchaseData(contexto: Context) = viewModelScope.launch{
 
-                    saveToSharedPreferences(contexto, "numPur", actualInfo.numPurchases.toString())
-                    saveToSharedPreferences(contexto, "totPur", actualInfo.totalPurchased.toString())
-                    saveToSharedPreferences(contexto, "typePur", actualInfo.typePurchased)
-                    saveToSharedPreferences(contexto, "condPur", actualInfo.condPurchased)
-                }
-                else
-                {
-                    val numPurP = retrieveFromSharedPreferences(contexto, "numPur")
-                    if(numPurP != null)
-                    {
-                        _numPur.value =  numPurP!!
-                    }
-                    val totPurP = retrieveFromSharedPreferences(contexto, "totPur")
-                    if(totPurP != null)
-                    {
-                        _totPur.value =  totPurP!!
-                    }
-                    val typePurP = retrieveFromSharedPreferences(contexto, "typePur")
-                    if(typePurP != null)
-                    {
-                        _typePur.value =  typePurP!!
-                    }
-                    val condPurP = retrieveFromSharedPreferences(contexto, "condPur")
-                    if(condPurP != null)
-                    {
-                        _condPur.value =  condPurP!!
-                    }
+        withContext(Dispatchers.IO) {
+                try {
+                    val actualInfo = repository.getPurchaseData()?.get(0)
+                    if (actualInfo != null) {
+                        _numPur.postValue(actualInfo.numPurchases.toString())
+                        _totPur.postValue(actualInfo.totalPurchased.toString())
+                        _typePur.postValue(actualInfo.typePurchased)
+                        _condPur.postValue(actualInfo.condPurchased)
 
+                        saveToSharedPreferences(
+                            contexto,
+                            "numPur",
+                            actualInfo.numPurchases.toString()
+                        )
+                        saveToSharedPreferences(
+                            contexto,
+                            "totPur",
+                            actualInfo.totalPurchased.toString()
+                        )
+                        saveToSharedPreferences(contexto, "typePur", actualInfo.typePurchased)
+                        saveToSharedPreferences(contexto, "condPur", actualInfo.condPurchased)
+                    }
+                }catch(e: Exception) {
+
+                    if (retrieveFromSharedPreferences(contexto, "numPur") == "") {
+                        _numPur.postValue("NO")
+                    } else {
+
+                        val numPurP = retrieveFromSharedPreferences(contexto, "numPur")
+                        if (numPurP != null) {
+                            _numPur.postValue(numPurP!!)
+                        }
+                        val totPurP = retrieveFromSharedPreferences(contexto, "totPur")
+                        if (totPurP != null) {
+                            _totPur.postValue(totPurP!!)
+                        }
+                        val typePurP = retrieveFromSharedPreferences(contexto, "typePur")
+                        if (typePurP != null) {
+                            _typePur.postValue(typePurP!!)
+                        }
+                        val condPurP = retrieveFromSharedPreferences(contexto, "condPur")
+                        if (condPurP != null) {
+                            _condPur.postValue(condPurP!!)
+                        }
+                    }
                 }
-            }
         }
     }
 

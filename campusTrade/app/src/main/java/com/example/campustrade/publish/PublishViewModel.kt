@@ -2,6 +2,7 @@ package com.example.campustrade.publish
 
 import android.content.ContentValues.TAG
 import android.content.Context
+import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.*
@@ -200,10 +201,12 @@ class PublishViewModel() : ViewModel() {
         if (!pIsConnected && _isLoading.value == true) {
             _message.postValue("No internet connection, product will be uploaded when connection returns if app is still running.")
             _connectDialg.postValue(true)
-        } else {
-            _message.postValue("No internet connection, connect and try again.")
+        }
+        else {
+            _message.postValue("No internet connection, connect and try again. Publish Button will be disabled ")
             _connectDialg.postValue(true)
         }
     }
+
 }
 

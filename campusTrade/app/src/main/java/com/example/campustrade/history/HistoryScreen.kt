@@ -56,7 +56,7 @@ fun MyBodyTransaction2(historyViewModel: HistoryViewModel){
     val configuration = LocalConfiguration.current
     val screenHeight = configuration.screenHeightDp.dp
 
-    val contexto = LocalContext.current.applicationContext
+    val contexto = LocalContext.current
 
     val numPur :String by historyViewModel.numPur.observeAsState(initial = "")
     val totPur :String by historyViewModel.totPur.observeAsState(initial = "")
@@ -143,21 +143,39 @@ fun MyBodyTransaction2(historyViewModel: HistoryViewModel){
         }
     }
 
-
-
-
-    val data :List<ProductDB> by historyViewModel.productList.observeAsState(emptyList())
-
-    historyViewModel.arrangeProductListFirestore()
-
-    Box(modifier = Modifier.height(screenHeight-370.dp))
-    {
-        LazyColumn() {
-            items(data) { item ->
-                TransactionList2(item, historyViewModel)
-            }
+    if(numPur=="NO") {
+        Box(
+            contentAlignment = Alignment.CenterEnd,
+            modifier = Modifier
+                .padding(end = 10.dp, top = 5.dp)
+                .fillMaxWidth()
+        ) {
+            Text(
+                text = "No Internet Connection or Previous Data Found",
+                style = MaterialTheme.typography.h6,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFFFB8500)
+            )
         }
     }
+    else
+    {
+            val data :List<ProductDB> by historyViewModel.productList.observeAsState(emptyList())
+
+            historyViewModel.arrangeProductListFirestore()
+
+            Box(modifier = Modifier.height(screenHeight-370.dp))
+            {
+                LazyColumn() {
+                    items(data) { item ->
+                        TransactionList2(item, historyViewModel)
+                    }
+                }
+            }
+    }
+
+
 }
 
 @Composable
