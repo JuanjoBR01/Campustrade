@@ -65,8 +65,7 @@ fun TopBarLaunchCamera(){
     ){
         Row(){
             IconButton(onClick = {
-                //val intent = Intent(context, PublishScreen::class.java)
-                val intent = Intent(context, ProdsPScreenActivity::class.java)
+                val intent = Intent(context, PublishScreen::class.java)
                 context.startActivity(intent)
             }) {
                 Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Go Back")

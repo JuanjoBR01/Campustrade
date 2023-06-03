@@ -35,6 +35,7 @@ import com.example.campustrade.R
 import com.example.campustrade.data.Resource
 import com.example.campustrade.home.HomeActivityMVVM
 import com.example.campustrade.objects.Coordinates
+import com.example.campustrade.prodsProfile.ProdsPScreenActivity
 import com.example.campustrade.ui.theme.*
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionState
@@ -146,6 +147,17 @@ fun ExploreScreenComposable(modifier: Modifier = Modifier, viewModel: ExploreVie
                     enabled = mapButtonEnabled
                 ) {
                     Text(text = "EXPLORE MAP")
+                }
+
+                Button(
+                    colors = ButtonDefaults.buttonColors(backgroundColor = orange),
+                    onClick = {
+                        val intent = Intent(context, ProdsPScreenActivity::class.java)
+                        context.startActivity(intent)
+                    },
+                    enabled = mapButtonEnabled
+                ) {
+                    Text(text = "EXPLORE SELLERS")
                 }
 
             }
